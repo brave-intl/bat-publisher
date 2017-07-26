@@ -1,0 +1,59 @@
+{
+  "name": "bat-publisher",
+  "version": "0.9.0",
+  "description": "Routines to identify publishers for the BAT.",
+  "main": "index.js",
+  "scripts": {
+    "dump": "node dump.js",
+    "dump2": "node dump2.js",
+    "lint": "standard",
+    "test": "npm run test-security; npm run test-logic",
+    "test-security": "nsp check",
+    "test-logic": "tap test",
+    "build-rules": "node tools/build-rules.js > rules/index.js",
+    "rebuild-rules": "node tools/rebuild-rules.js categories/rulesets.json > rules/index.js",
+    "make-bootstrap": "node tools/make-bootstrap.js > bootstrap.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/brave-intl/bat-publisher"
+  },
+  "author": "Brave Developers <support@brave.com>",
+  "license": "MPL-2.0",
+  "bugs": {
+    "url": "https://github.com/brave-intl/bat-publisher/issues"
+  },
+  "homepage": "https://github.com/brave-intl/bat-publisher",
+  "dependencies": {
+    "async": "^2.0.1",
+    "data-expression": "1.0.0",
+    "glob": "^7.0.6",
+    "joi": "^10.6.0",
+    "jsdom": "11.1.0",
+    "random-lib": "2.1.0",
+    "tldjs": "1.7.0",
+    "underscore": "1.8.3",
+    "underscore.string": "3.3.4"
+  },
+  "engines": {
+    "node": "7.10.1",
+    "npm": "4.2.0"
+  },
+  "devDependencies": {
+    "babel-eslint": "^7.2.1",
+    "del": "^3.0.0",
+    "gulp": "^3.9.0",
+    "gulp-run": "^1.7.1",
+    "gulp-standard": "^10.0.0",
+    "knodeo-http-sync": "^0.1.0",
+    "level": "1.7.0",
+    "nsp": "^2.2.0",
+    "run-sequence": "^2.0.0",
+    "standard": "10.0.2",
+    "tap": "^10.7.0",
+    "uuid": "3.1.0"
+  },
+  "standard": {
+    "parser": "babel-eslint"
+  }
+}
