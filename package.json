@@ -1,6 +1,6 @@
 {
   "name": "bat-publisher",
-  "version": "0.9.2",
+  "version": "0.9.3",
   "description": "Routines to identify publishers for the BAT.",
   "main": "index.js",
   "scripts": {
@@ -28,7 +28,7 @@
     "async": "^2.5.0",
     "data-expression": "1.0.0",
     "glob": "^7.1.2",
-    "joi": "^10.6.0",
+    "joi": "^11.0.3",
     "jsdom": "11.2.0",
     "random-lib": "2.1.0",
     "tldjs": "2.2.0",
@@ -45,7 +45,7 @@
     "npm-check-updates": "^2.12.1",
     "nsp": "^2.8.0",
     "standard": "10.0.3",
-    "tap": "^10.7.0"
+    "tap": "^10.7.2"
   },
   "standard": {
     "parser": "babel-eslint"
