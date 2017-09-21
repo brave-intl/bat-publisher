@@ -69,18 +69,17 @@ var getPublisher = function (location, markup, ruleset) {
 }
 
 var getPublisherProps = function (location) {
-  var props
+  let props = url.parse(location, true)
 
-  if (!tldjs.isValid(location)) return
+  if (!tldjs.isValid(props.hostname)) return
 
-  props = url.parse(location, true)
-  props.TLD = tldjs.getPublicSuffix(props.host)
+  props.TLD = tldjs.getPublicSuffix(props.hostname)
   if (!props.TLD) return
 
   props = underscore.mapObject(props, function (value /* , key */) { if (!underscore.isFunction(value)) return value })
   props.URL = location
-  props.SLD = tldjs.getDomain(props.host)
-  props.RLD = tldjs.getSubdomain(props.host)
+  props.SLD = tldjs.getDomain(props.hostname)
+  props.RLD = tldjs.getSubdomain(props.hostname)
   props.QLD = props.RLD ? underscore.last(props.RLD.split('.')) : ''
 
   return props
