@@ -381,8 +381,19 @@ Synopsis.prototype.prune = function (then) {
       }, this)
     }
 
-    // do not delete the entry as it may have options
-    if (visits === 0) return
+    if (visits === 0) {
+      // do not delete the entry if it has options
+      if ((!entry.options) || (!entry.options.exclude)) {
+        delete this.publishers[publisher]
+        return
+      }
+
+      entry.visits = 0
+      entry.duration = 0
+      entry.scores = underscore.clone(this.options.emptyScores)
+      entry.window = [ { timestamp: now, visits: entry.visits, duration: entry.duration, scores: entry.scores } ]
+      return
+    }
 
     if (i < entry.window.length) {
       entry.visits = visits
