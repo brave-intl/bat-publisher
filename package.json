@@ -1,6 +1,6 @@
 {
   "name": "bat-publisher",
-  "version": "0.9.5",
+  "version": "1.0.2",
   "description": "Routines to identify publishers for the BAT.",
   "main": "index.js",
   "scripts": {
@@ -36,8 +36,8 @@
     "underscore.string": "3.3.4"
   },
   "engines": {
-    "node": "7.10.1",
-    "npm": "4.2.0"
+    "node": ">=7.10.1",
+    "npm": ">=4.2.0"
   },
   "devDependencies": {
     "babel-eslint": "^8.0.0",
