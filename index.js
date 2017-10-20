@@ -1,6 +1,7 @@
-var datax = require('data-expression')
 var Joi = require('joi')
+var datax = require('data-expression')
 var jsdom = require('jsdom').jsdom
+var npminfo = require('./package.json')
 var random = require('random-lib')
 var tldjs = require('tldjs')
 var trim = require('underscore.string/trim')
@@ -413,7 +414,8 @@ module.exports = {
 // Note - the rules are dynamically built via the 'npm run build-rules' script (do not edit the rules/index.js file directly)
   ruleset: require('./rules'),
   schema: schema,
-  Synopsis: Synopsis
+  Synopsis: Synopsis,
+  version: npminfo.version
 }
 
 var validity = Joi.validate(module.exports.ruleset, schema)
