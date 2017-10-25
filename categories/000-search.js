@@ -110,7 +110,6 @@ const domains = [
   'doklad.ru',
   'domofond.ru',
   'downspeedtest.com',
-  'duckduckgo.com',
   'eapteka.ru',
   'earthcam.com',
   'ecosia.org',

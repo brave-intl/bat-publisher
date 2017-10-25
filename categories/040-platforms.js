@@ -15,7 +15,6 @@ const SLDs = [
   'pinterest',
   'quora',
   'slack',
-  'stackoverflow',
   'twitter',
   'vk',
   'xvideos',

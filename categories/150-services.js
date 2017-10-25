@@ -327,7 +327,6 @@ const domains = [
   'dtdc.com',
   'dtdc.in',
   'duba.com',
-  'duckduckgo.com',
   'duke-energy.com',
   'e-cartebleue.com',
   'e-paycapita.com',
