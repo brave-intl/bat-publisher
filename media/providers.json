@@ -1,0 +1,9 @@
+[
+  {
+    "provider_name": "YouTube",
+    "provider_url": "https://www.youtube.com/",
+    "schemes": [],
+    "domain": "youtube.com",
+    "url": "https://www.youtube.com/oembed"
+  }
+]

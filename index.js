@@ -1,12 +1,12 @@
-var Joi = require('joi')
-var datax = require('data-expression')
-var jsdom = require('jsdom').jsdom
-var npminfo = require('./package.json')
-var random = require('random-lib')
-var tldjs = require('tldjs')
-var trim = require('underscore.string/trim')
-var underscore = require('underscore')
-var url = require('url')
+const Joi = require('joi')
+const datax = require('data-expression')
+const jsdom = require('jsdom').jsdom
+const npminfo = require('./package.json')
+const random = require('random-lib')
+const tldjs = require('tldjs')
+const trim = require('underscore.string/trim')
+const underscore = require('underscore')
+const url = require('url')
 
 /* foo.bar.example.com
     QLD = 'bar'
@@ -21,7 +21,7 @@ var url = require('url')
     TLD = 'co.jp'
  */
 
-var schema = Joi.array().min(1).items(Joi.object().keys(
+const schema = Joi.array().min(1).items(Joi.object().keys(
   { condition: Joi.alternatives().try(Joi.string().description('a JavaScript boolean expression'),
                                       Joi.boolean().allow(true).description('only "true" makes sense')).required(),
     consequent: Joi.alternatives().try(Joi.string().description('a JavaScript string expression'),
@@ -31,9 +31,9 @@ var schema = Joi.array().min(1).items(Joi.object().keys(
   }
 ))
 
-var getPublisher = function (location, markup, ruleset) {
-  var consequent, i, result, rule
-  var props = getPublisherProps(location)
+const getPublisher = (location, markup, ruleset) => {
+  const props = getPublisherProps(location)
+  let consequent, i, result, rule
 
   if (!props) return
 
@@ -69,7 +69,7 @@ var getPublisher = function (location, markup, ruleset) {
   }
 }
 
-var getPublisherProps = function (location) {
+const getPublisherProps = (location) => {
   let props = url.parse(location, true)
 
   if (!tldjs.isValid(props.hostname)) return
@@ -77,7 +77,7 @@ var getPublisherProps = function (location) {
   props.TLD = tldjs.getPublicSuffix(props.hostname)
   if (!props.TLD) return
 
-  props = underscore.mapObject(props, function (value /* , key */) { if (!underscore.isFunction(value)) return value })
+  props = underscore.mapObject(props, (value /* , key */) => { if (!underscore.isFunction(value)) return value })
   props.URL = location
   props.SLD = tldjs.getDomain(props.hostname)
   props.RLD = tldjs.getSubdomain(props.hostname)
@@ -86,10 +86,17 @@ var getPublisherProps = function (location) {
   return props
 }
 
-var isPublisher = function (publisher) {
-  var props
-  var parts = publisher.split('/')
+//  cf., https://github.com/brave-intl/bat-publisher#syntax
 
+const providerRE = /^[A-Za-z0-9][A-Za-z0-9-]{0,62}#[A-Za-z0-9][A-Za-z0-9-]{0,62}:[A-Za-z0-9-._~]+$/
+
+const isPublisher = (publisher) => {
+  const parts = publisher.split('/')
+  let props
+
+  if (providerRE.test(publisher)) return true
+
+  // we could use an RE, but why reproduce all that effort?
   if (!tldjs.isValid(parts[0])) return false
   if (parts.length === 1) return true
 
@@ -97,8 +104,8 @@ var isPublisher = function (publisher) {
   return ((!props.hash) && (!props.search))
 }
 
-var Synopsis = function (options) {
-  var p
+const Synopsis = function (options) {
+  let p
 
   this.publishers = {}
   if ((typeof options === 'string') || (Buffer.isBuffer(options))) {
@@ -112,7 +119,8 @@ var Synopsis = function (options) {
 
   this.options = options || {}
   this.options.scorekeepers = underscore.keys(Synopsis.prototype.scorekeepers)
-  underscore.defaults(this.options, { minPublisherDuration: 8 * 1000,
+  underscore.defaults(this.options, {
+    minPublisherDuration: 8 * 1000,
     numFrames: 30,
     frameSize: 24 * 60 * 60 * 1000,
     _d: 1 / (30 * 1000),
@@ -133,8 +141,8 @@ var Synopsis = function (options) {
   this.options._b2 = this.options._b * this.options._b
 
   underscore.keys(this.publishers).forEach(function (publisher) {
-    var i
-    var entry = this.publishers[publisher]
+    const entry = this.publishers[publisher]
+    let i
 
 // NB: legacy support
     if (typeof entry.options === 'undefined') entry.options = {}
@@ -160,7 +168,7 @@ var Synopsis = function (options) {
 }
 
 Synopsis.prototype.addVisit = function (location, duration, markup) {
-  var publisher
+  let publisher
 
   if (duration < this.options.minPublisherDuration) return
 
@@ -171,7 +179,7 @@ Synopsis.prototype.addVisit = function (location, duration, markup) {
 }
 
 Synopsis.prototype.initPublisher = function (publisher, now, props) {
-  var entry = this.publishers[publisher]
+  const entry = this.publishers[publisher]
 
   if (!props) props = {}
   if (entry) {
@@ -197,13 +205,13 @@ Synopsis.prototype.initPublisher = function (publisher, now, props) {
 }
 
 Synopsis.prototype.addPublisher = function (publisher, props) {
-  var entry, scores
-  var now = underscore.now()
+  const now = underscore.now()
+  let entry, scores
 
   if (!props) return
 
   if (typeof props === 'number') props = { duration: props }
-  if ((!props.stickyP) && (props.duration < this.options.minPublisherDuration)) return
+  if (((!props.stickyP) && (!props.ignoreMinTime)) && (props.duration < this.options.minPublisherDuration)) return
 
   scores = this.scores(props)
   if (!scores) return
@@ -240,8 +248,8 @@ Synopsis.prototype.topN = function (n) {
 }
 
 Synopsis.prototype.allN = function (n) {
-  var results = []
-  var weights = {}
+  const results = []
+  const weights = {}
 
   underscore.keys(Synopsis.prototype.scorekeepers).forEach(function (scorekeeper) {
     (this._topN(n, scorekeeper, true) || []).forEach(function (entry) {
@@ -259,7 +267,7 @@ Synopsis.prototype.allN = function (n) {
 }
 
 Synopsis.prototype._topN = function (n, scorekeeper, allP) {
-  var i, results, total
+  let i, results, total
 
   this.prune()
 
@@ -292,14 +300,14 @@ Synopsis.prototype._topN = function (n, scorekeeper, allP) {
 }
 
 Synopsis.prototype.winner = function () {
-  var result = this.winners()
+  const result = this.winners()
 
   return (result ? result[0] : result)
 }
 
 Synopsis.prototype.winners = function (n, weights) {
-  var i, point, upper, winners
-  var results = weights || this.topN()
+  const results = weights || this.topN()
+  let i, point, upper, winners
 
   if (!results) return
 
@@ -329,11 +337,11 @@ Synopsis.prototype.toJSON = function () {
 }
 
 Synopsis.prototype.scores = function (props) {
-  var emptyP = true
-  var result = {}
+  const result = {}
+  let emptyP = true
 
   underscore.keys(Synopsis.prototype.scorekeepers).forEach(function (scorekeeper) {
-    var score = Synopsis.prototype.scorekeepers[scorekeeper].bind(this)(props)
+    let score = Synopsis.prototype.scorekeepers[scorekeeper].bind(this)(props)
 
     result[scorekeeper] = score > 0 ? score : 0
     if ((score === 0) && (props.stickyP)) score = 1
@@ -355,15 +363,15 @@ Synopsis.prototype.scorekeepers.visits = function (/* props */) {
 }
 
 Synopsis.prototype.prune = function (then) {
-  var now = underscore.now()
+  const now = underscore.now()
 
   if (!then) then = now - (this.options.numFrames * this.options.frameSize)
   underscore.keys(this.publishers).forEach(function (publisher) {
-    var i
-    var duration = 0
-    var entry = this.publishers[publisher]
-    var scores = {}
-    var visits = 0
+    const entry = this.publishers[publisher]
+    const scores = {}
+    let i
+    let duration = 0
+    let visits = 0
 
     // NB: in case of user editing...
     if ((!entry.window) || (!entry.window.length)) {
@@ -410,6 +418,7 @@ module.exports = {
   getPublisherProps: getPublisherProps,
   getCategories: require('./categories'),
   getRules: require('./categories').all,
+  getMedia: require('./getMedia'),
   isPublisher: isPublisher,
 // Note - the rules are dynamically built via the 'npm run build-rules' script (do not edit the rules/index.js file directly)
   ruleset: require('./rules'),
@@ -418,5 +427,5 @@ module.exports = {
   version: npminfo.version
 }
 
-var validity = Joi.validate(module.exports.ruleset, schema)
+const validity = Joi.validate(module.exports.ruleset, schema)
 if (validity.error) throw new Error(validity.error)

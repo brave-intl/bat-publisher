@@ -47,22 +47,31 @@ and the QLD and RLD are both the string `search`.
 ### Syntax
 The ABNF syntax for a publisher identity is:
 
-    publisher-identity = domain [ "/" segment ]
+    publisher-identity = site-identity / provider-identity
 
+        site-identity = domain [ "/" segment ]
                 domain = [ RLD "." ] SLD
                    RLD = *[ label "." ] QLD
                    QLD = label
                    SLD = label "." TLD
                    TLD = infraTLD / ccTLD
-                 ccTLD = label "." 2ALPHA                ; a two-letter country code, cf. ISO 3166
-              infraTLD = label                           ; ".com", ".gov", etc.
+                 ccTLD = label "." 2ALPHA                         ; a two-letter country code, cf. ISO 3166
+              infraTLD = label                                    ; ".com", ".gov", etc.
 
-                 label = alphanum *62(alphanum / "-")    ; any octet encoded according to RFC 2181
+                 label = alphanum *62(alphanum / "-")             ; any octet encoded according to RFC 2181
               alphanum = ALPHA / DIGIT
+          path-abempty = *( "/" segment)                          ; as defined in Section 3.3 of RFC 3986
 
-               segment = *pchar                          ; as defined in Section 3.3 of RFC 3986
+     provider-prefix = provider-scheme ":" provider-value
 
-Note that a publisher identity must not include either a fragment (`#...`) or a query (`?...`).
+       provider-scheme = provider-prefix "#" provider-suffix
+       provider-prefix = label
+       provider-suffix = label
+
+        provider-value = 1*unreserved
+            unreserved = ALPHA / DIGIT / "-" / "." / "_" / "~"    ; as defined in section 2.3 of RFC 3986
+
+Note that a `site-identity` must not include either a fragment (`#...`) or a query (`?...`).
 
     var isPublisher = require('bat-publisher').isPublisher
 

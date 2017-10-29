@@ -37,3 +37,4 @@ node_modules
 
 # bat-client bootstrap
 bootstrap.js
+test.js
