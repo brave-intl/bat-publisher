@@ -10,7 +10,32 @@ const NodeCache = require('node-cache')
 const pcc = require('parse-cache-control')
 const underscore = require('underscore')
 
-const getPublisherFromMedia = (mediaURL, options, callback) => {
+const getPublisherFromMediaProps = (mediaProps, options, callback) => {
+  const providerName = mediaProps.providerName
+  let mediaURL
+
+  if (!mappers[providerName]) return setTimeout(() => { callback(new Error('no mapper for ' + providerName)) }, 0)
+
+  try {
+    mediaURL = mappers[providerName](mediaProps)
+  } catch (ex) {
+    return setTimeout(() => { callback(ex) }, 0)
+  }
+
+  getPublisherFromMediaURL(mediaURL, options, callback)
+}
+
+const mappers = {
+  YouTube: (mediaProps) => {
+    const mediaId = mediaProps.mediaId
+
+    if (!mediaId) throw new Error('expecting mediaId for provider YouTube')
+
+    return ('https://www.youtube.com/watch?v=' + mediaId)
+  }
+}
+
+const getPublisherFromMediaURL = (mediaURL, options, callback) => {
   let providers
 
   if (typeof options === 'function') {
@@ -40,7 +65,7 @@ const getPublisherFromProviders = (providers, mediaURL, options, firstErr, callb
   let parts, resolver
 
   const done = (err) => {
-    setTimeout(() => callback(firstErr || err, null), 0)
+    setTimeout(() => { callback(firstErr || err, null) }, 0)
   }
 
   if (!provider) return done()
@@ -146,7 +171,7 @@ const getPropertiesForPublisher = (publisherInfo, options, callback) => {
     path: '/v3/publisher/identity?' + querystring.stringify({ publisher: publisherInfo.publisher }),
     timeout: options.timeout
   }, options, (err, response, payload) => {
-    if (!err) publisherInfo.properties = payload.properties
+    if (!err) publisherInfo.properties = payload.properties || {}
 
     callback(null, publisherInfo)
   })
@@ -268,7 +293,8 @@ const roundTrip = (params, options, callback) => {
 }
 
 module.exports = {
-  getPublisherFromMedia: getPublisherFromMedia,
+  getPublisherFromMediaURL: getPublisherFromMediaURL,
+  getPublisherFromMediaProps: getPublisherFromMediaProps,
   ruleset: require('./media/providers.json'),
   cache: new NodeCache()
 }
