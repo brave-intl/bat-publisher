@@ -75,7 +75,19 @@ const getPublisherProps = (location) => {
   const provider = providerRE.exec(location)
   let props
 
-  if (provider) return { providerName: provider[0], providerSuffix: provider[1], providerValue: provider[2] }
+  if (provider) {
+    return {
+      publisher: provider[0],
+      publisherType: 'provider',
+      providerName: provider[1],
+      providerSuffix: provider[2],
+      providerValue: provider[3],
+      TLD: '',
+      SLD: '',
+      RLD: '',
+      QLD: ''
+    }
+  }
 
   if (location.indexOf('://') === -1) location = 'https://' + location
   props = url.parse(location, true)
