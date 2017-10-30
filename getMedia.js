@@ -96,9 +96,8 @@ const resolvers = {
     cachedTrip({
       server: parts.protocol + '//' + parts.host,
       path: parts.path,
-      rawP: true,
       timeout: options.timeout
-    }, options, (err, response, body) => {
+    }, underscore.extend({ rawP: true }, options), (err, response, body) => {
       if (err) return next(providers, mediaURL, options, firstErr || err, callback)
 
       metascraper.scrapeHtml(body).then((result) => {
@@ -132,9 +131,8 @@ const getFaviconForPublisher = (publisherInfo, options, callback) => {
   cachedTrip({
     server: parts.protocol + '//' + parts.host,
     path: parts.path,
-    binaryP: true,
     timeout: options.timeout
-  }, options, (err, response, body) => {
+  }, underscore.extend({ binaryP: true }, options), (err, response, body) => {
     if (err) return callback(err)
 
     jimp.read(body, (err, image) => {
@@ -228,16 +226,16 @@ const retryTrip = (params, options, callback, retry) => {
 
 const roundTrip = (params, options, callback) => {
   let request, timeoutP
-  const encoding = params.binaryP ? 'binary' : 'utf8'
+  const encoding = options.binaryP ? 'binary' : 'utf8'
   const parts = url.parse(params.server)
   const client = parts.protocol === 'https:' ? https : http
 
   params = underscore.defaults(underscore.extend(underscore.pick(parts, 'protocol', 'hostname', 'port'), params),
                                { method: params.payload ? 'POST' : 'GET' })
-  if (params.binaryP) params.rawP = true
+  if (options.binaryP) options.rawP = true
   if (options.debugP) console.log('\nparams=' + JSON.stringify(params, null, 2))
 
-  request = client.request(underscore.omit(params, [ 'payload', 'timeout', 'binaryP', 'rawP' ]), (response) => {
+  request = client.request(underscore.omit(params, [ 'payload', 'timeout' ]), (response) => {
     const chunks = []
     let body = ''
 
@@ -257,14 +255,14 @@ const roundTrip = (params, options, callback) => {
         underscore.keys(response.headers).forEach(function (header) {
           console.log('>>> ' + header + ': ' + response.headers[header])
         })
-        console.log('>>> ' + (params.rawP ? '...' : body.toString() || '').split('\n').join('\n>>> '))
+        console.log('>>> ' + (options.rawP ? '...' : body.toString() || '').split('\n').join('\n>>> '))
       }
       if (Math.floor(response.statusCode / 100) !== 2) {
         return callback(new Error('HTTP response ' + response.statusCode), response)
       }
 
       try {
-        payload = params.rawP ? body : (response.statusCode !== 204) ? JSON.parse(body) : null
+        payload = options.rawP ? body : (response.statusCode !== 204) ? JSON.parse(body) : null
       } catch (err) {
         return callback(err, response)
       }
