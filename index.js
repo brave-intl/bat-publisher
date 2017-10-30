@@ -31,6 +31,8 @@ const schema = Joi.array().min(1).items(Joi.object().keys(
   }
 ))
 
+const providerRE = /^([A-Za-z0-9][A-Za-z0-9-]{0,62})#([A-Za-z0-9][A-Za-z0-9-]{0,62}):([A-Za-z0-9-._~]+)$/
+
 const getPublisher = (location, markup, ruleset) => {
   const props = getPublisherProps(location)
   let consequent, i, result, rule
@@ -70,8 +72,13 @@ const getPublisher = (location, markup, ruleset) => {
 }
 
 const getPublisherProps = (location) => {
-  let props = url.parse(location, true)
+  const provider = providerRE.exec(location)
+  let props
 
+  if (provider) return { providerName: provider[0], providerSuffix: provider[1], providerValue: provider[2] }
+
+  if (location.indexOf('://') === -1) location = 'https://' + location
+  props = url.parse(location, true)
   if (!tldjs.isValid(props.hostname)) return
 
   props.TLD = tldjs.getPublicSuffix(props.hostname)
@@ -87,8 +94,6 @@ const getPublisherProps = (location) => {
 }
 
 //  cf., https://github.com/brave-intl/bat-publisher#syntax
-
-const providerRE = /^[A-Za-z0-9][A-Za-z0-9-]{0,62}#[A-Za-z0-9][A-Za-z0-9-]{0,62}:[A-Za-z0-9-._~]+$/
 
 const isPublisher = (publisher) => {
   const parts = publisher.split('/')
