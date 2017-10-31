@@ -62,13 +62,14 @@ The ABNF syntax for a publisher identity is:
               alphanum = ALPHA / DIGIT
           path-abempty = *( "/" segment)                          ; as defined in Section 3.3 of RFC 3986
 
-     provider-prefix = provider-scheme ":" provider-value
+       provider-prefix = provider-scheme ":" provider-value
 
        provider-scheme = provider-prefix "#" provider-suffix
        provider-prefix = label
        provider-suffix = label
 
-        provider-value = 1*unreserved
+        provider-value = 1*(unreserved / pct-encoded)
+           pct-encoded = "%" HEXDIG HEXDIG                        ; as defined in section 2.1 of RFC 3986
             unreserved = ALPHA / DIGIT / "-" / "." / "_" / "~"    ; as defined in section 2.3 of RFC 3986
 
 Note that a `site-identity` must not include either a fragment (`#...`) or a query (`?...`).

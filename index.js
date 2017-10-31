@@ -1,3 +1,6 @@
+const querystring = require('querystring')
+const url = require('url')
+
 const Joi = require('joi')
 const datax = require('data-expression')
 const jsdom = require('jsdom').jsdom
@@ -6,7 +9,6 @@ const random = require('random-lib')
 const tldjs = require('tldjs')
 const trim = require('underscore.string/trim')
 const underscore = require('underscore')
-const url = require('url')
 
 /* foo.bar.example.com
     QLD = 'bar'
@@ -31,7 +33,7 @@ const schema = Joi.array().min(1).items(Joi.object().keys(
   }
 ))
 
-const providerRE = /^([A-Za-z0-9][A-Za-z0-9-]{0,62})#([A-Za-z0-9][A-Za-z0-9-]{0,62}):([A-Za-z0-9-._~]+)$/
+const providerRE = /^([A-Za-z0-9][A-Za-z0-9-]{0,62})#([A-Za-z0-9][A-Za-z0-9-]{0,62}):(([A-Za-z0-9-._~]|%[0-9A-F]{2})+)$/
 
 const getPublisher = (location, markup, ruleset) => {
   const props = getPublisherProps(location)
@@ -81,7 +83,7 @@ const getPublisherProps = (location) => {
       publisherType: 'provider',
       providerName: provider[1],
       providerSuffix: provider[2],
-      providerValue: provider[3],
+      providerValue: querystring.unescape(provider[3]),
       TLD: '',
       SLD: '',
       RLD: '',

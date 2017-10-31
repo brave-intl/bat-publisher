@@ -11,7 +11,7 @@ const pcc = require('parse-cache-control')
 const underscore = require('underscore')
 
 const getPublisherFromMediaProps = (mediaProps, options, callback) => {
-  const providerName = mediaProps.providerName
+  const providerName = mediaProps.providerName.toLowerCase()
   let mediaURL
 
   if (!mappers[providerName]) return setTimeout(() => { callback(new Error('no mapper for ' + providerName)) }, 0)
@@ -26,7 +26,7 @@ const getPublisherFromMediaProps = (mediaProps, options, callback) => {
 }
 
 const mappers = {
-  YouTube: (mediaProps) => {
+  youtube: (mediaProps) => {
     const mediaId = mediaProps.mediaId
 
     if (!mediaId) throw new Error('expecting mediaId for provider YouTube')
