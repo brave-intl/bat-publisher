@@ -78,7 +78,7 @@ const getPublisherProps = (location) => {
   let props
 
   if (provider) {
-    return {
+    props = {
       publisher: provider[0],
       publisherType: 'provider',
       providerName: provider[1],
@@ -89,6 +89,11 @@ const getPublisherProps = (location) => {
       RLD: '',
       QLD: ''
     }
+
+    if ((props.providerName.toLowerCase() === 'youtube') && (props.providerSuffix === 'channel')) {
+      props.URL = 'https://www.youtube.com/channel/' + props.providerValue
+    }
+    return props
   }
 
   if (location.indexOf('://') === -1) location = 'https://' + location

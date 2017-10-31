@@ -103,11 +103,13 @@ const resolvers = {
       metascraper.scrapeHtml(body).then((result) => {
         const publisherInfo = {
           publisher: 'youtube#channel:' + paths[2],
+          publisherType: 'provider',
           publisherURL: payload.author_url + '/videos',
+          providerName: provider.provider_name,
+          providerSuffix: 'channel',
+          providerValue: paths[2],
           faviconName: result.title || payload.author_name,
-          faviconURL: result.image || payload.thumbnail_url,
-//        publisherName: result.author || payload.title,
-          providerName: provider.provider_name
+          faviconURL: result.image || payload.thumbnail_url
         }
 
         getFaviconForPublisher(publisherInfo, options, callback)
