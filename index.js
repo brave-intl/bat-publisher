@@ -83,13 +83,14 @@ const getPublisherProps = (location) => {
       publisherType: 'provider',
       providerName: provider[1],
       providerSuffix: provider[2],
-      providerValue: querystring.unescape(provider[3]),
-      TLD: '',
-      SLD: '',
-      RLD: '',
-      QLD: ''
+      providerValue: querystring.unescape(provider[3])
     }
-
+    underscore.extend(props, {
+      TLD: props.publisher.split(':')[0],
+      SLD: props.publisher,
+      RLD: props.providerValue,
+      QLD: ''
+    })
     if ((props.providerName.toLowerCase() === 'youtube') && (props.providerSuffix === 'channel')) {
       props.URL = 'https://www.youtube.com/channel/' + props.providerValue
     }

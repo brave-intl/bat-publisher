@@ -111,6 +111,13 @@ const resolvers = {
           faviconName: result.title || payload.author_name,
           faviconURL: result.image || payload.thumbnail_url
         }
+        underscore.extend(publisherInfo, {
+          TLD: publisherInfo.publisher.split(':')[0],
+          SLD: publisherInfo.publisher,
+          RLD: publisherInfo.providerValue,
+          QLD: '',
+          URL: publisherInfo.publisherURL
+        })
 
         getFaviconForPublisher(publisherInfo, options, callback)
       }).catch((err) => {
