@@ -1,11 +1,9 @@
 {
   "name": "bat-publisher",
-  "version": "1.1.7",
+  "version": "1.2.0",
   "description": "Routines to identify publishers for the BAT.",
   "main": "index.js",
   "scripts": {
-    "dump": "node dump.js",
-    "dump2": "node dump2.js",
     "lint": "standard",
     "test": "npm run test-security; npm run test-logic",
     "test-security": "nsp check",
@@ -53,6 +51,9 @@
     "tap": "^10.7.2"
   },
   "standard": {
+    "ignore": [
+      "bootstrap.js"
+    ],
     "parser": "babel-eslint"
   }
 }

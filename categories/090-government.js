@@ -5,7 +5,7 @@ module.exports = {
     const rule = {
       condition: "TLD === 'gov' || /^go.[a-z][a-z]$/.test(TLD) || /^gov.[a-z][a-z]$/.test(TLD)",
       consequent: null,
-      description: 'exclude all government sites'
+      description: 'exclude government sites'
     }
     cb(null, rule)
   }

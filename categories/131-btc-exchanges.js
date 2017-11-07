@@ -24,7 +24,7 @@ const domains = [
   'bter.com',
   'cryptopia.co.nz',
   'gate.io',
-  'etherdelta.com', 
+  'etherdelta.com',
   'mercatox.com',
   'tidex.com',
   'bitso.com',

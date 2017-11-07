@@ -55,6 +55,5 @@ var traverse = function (paths) {
 }
 
 traverse([
-  process.env.HOME + '/Library/Application Support/brave-development/ledger-publishersV2.leveldb',
-  process.env.HOME + '/Library/Application Support/brave-development/ledger-rulesV2.leveldb'
+  process.env.HOME + '/Library/Application Support/brave/ledger-rulesV2.leveldb'
 ])
