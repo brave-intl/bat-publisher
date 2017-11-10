@@ -8,6 +8,7 @@ const jimp = require('jimp')
 const metascraper = require('metascraper')
 const NodeCache = require('node-cache')
 const pcc = require('parse-cache-control')
+const tldjs = require('tldjs')
 const underscore = require('underscore')
 
 const getPublisherFromMediaProps = (mediaProps, options, callback) => {
@@ -36,7 +37,7 @@ const mappers = {
 }
 
 const getPublisherFromMediaURL = (mediaURL, options, callback) => {
-  let providers
+  let parts, providers
 
   if (typeof options === 'function') {
     callback = options
@@ -52,7 +53,10 @@ const getPublisherFromMediaURL = (mediaURL, options, callback) => {
   providers = underscore.filter(options.ruleset, (rule) => {
     const schemes = rule.schemes
 
-    if (!schemes.length) return (mediaURL.indexOf(rule.domain) !== -1)
+    if (!schemes.length) {
+      parts = url.parse(mediaURL)
+      return ((parts) && (tldjs.getDomain(parts.hostname) === rule.domain))
+    }
 
     for (let scheme in schemes) if (mediaURL.match(new RegExp(scheme.replace(/\*/g, '(.*)'), 'i'))) return true
   })
