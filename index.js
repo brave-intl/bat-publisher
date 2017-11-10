@@ -99,7 +99,7 @@ const getPublisherProps = (location) => {
 
   if (location.indexOf('://') === -1) location = 'https://' + location
   props = url.parse(location, true)
-  if (!tldjs.isValid(props.hostname)) return
+  if ((!props) || (!tldjs.isValid(props.hostname))) return
 
   props.TLD = tldjs.getPublicSuffix(props.hostname)
   if (!props.TLD) return
@@ -126,7 +126,7 @@ const isPublisher = (publisher) => {
   if (parts.length === 1) return true
 
   props = url.parse('https://' + publisher)
-  return ((!props.hash) && (!props.search))
+  return ((!!props) && (!props.hash) && (!props.search))
 }
 
 const Synopsis = function (options) {

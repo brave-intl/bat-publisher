@@ -89,9 +89,10 @@ const resolvers = {
   YouTube: (providers, mediaURL, options, payload, firstErr, callback) => {
     const provider = underscore.first(providers)
     const parts = url.parse(payload.author_url)
-    const paths = parts.pathname.split('/')
+    let paths
 
-    if (paths.length !== 3) throw new Error('invalid author_url: ' + payload.author_url)
+    paths = parts && parts.pathname.split('/')
+    if ((!paths) || (paths.length !== 3)) throw new Error('invalid author_url: ' + payload.author_url)
 
     cachedTrip({
       server: parts.protocol + '//' + parts.host,
@@ -137,6 +138,8 @@ const getFaviconForPublisher = (publisherInfo, options, callback) => {
   if (!publisherInfo.faviconURL) return callback(null, publisherInfo)
 
   parts = url.parse(publisherInfo.faviconURL)
+  if (!parts) return callback(new Error('invalid faviconURL: ' + publisherInfo.faviconURL))
+
   cachedTrip({
     server: parts.protocol + '//' + parts.host,
     path: parts.path,
