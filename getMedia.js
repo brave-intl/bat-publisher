@@ -50,13 +50,13 @@ const getPublisherFromMediaURL = (mediaURL, options, callback) => {
   } else if (options.debugP) options.roundtrip = roundTrip
   else throw new Error('security audit requires options.roundtrip for non-debug use')
 
+  parts = url.parse(mediaURL)
+  if ((parts) && (parts.protocol !== 'https:')) return setTimeout(() => { callback(new Error('non-https URL'), null) }, 0)
+
   providers = underscore.filter(options.ruleset, (rule) => {
     const schemes = rule.schemes
 
-    if (!schemes.length) {
-      parts = url.parse(mediaURL)
-      return ((parts) && (tldjs.getDomain(parts.hostname) === rule.domain))
-    }
+    if (!schemes.length) return ((parts) && (tldjs.getDomain(parts.hostname) === rule.domain))
 
     for (let scheme in schemes) if (mediaURL.match(new RegExp(scheme.replace(/\*/g, '(.*)'), 'i'))) return true
   })
