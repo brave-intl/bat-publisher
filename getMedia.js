@@ -113,7 +113,7 @@ const resolvers = {
           providerName: provider.provider_name,
           providerSuffix: 'channel',
           providerValue: paths[2],
-          faviconName: result.title || payload.author_name,
+          faviconName: payload.author_name || result.title,
           faviconURL: result.image || payload.thumbnail_url
         }
         underscore.extend(publisherInfo, {
