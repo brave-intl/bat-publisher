@@ -106,8 +106,12 @@ const resolvers = {
       if (err) return next(providers, mediaURL, options, firstErr || err, callback)
 
       metascraper.scrapeHtml(body).then((result) => {
+        const parts = url.parse(result.url)
+        const cpaths = parts && parts.pathname.split('/')
+        const channel = (parts.pathname === parts.path) && (cpaths.length === 3) && (cpaths[1] === 'channel')
+              ? cpaths[2] : paths[2]
         const publisherInfo = {
-          publisher: 'youtube#channel:' + paths[2],
+          publisher: 'youtube#channel:' + channel,
           publisherType: 'provider',
           publisherURL: payload.author_url + '/videos',
           providerName: provider.provider_name,
