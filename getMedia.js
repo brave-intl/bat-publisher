@@ -85,6 +85,7 @@ const getPublisherFromProviders = (providers, mediaURL, options, firstErr, callb
   }, options, (err, response, payload) => {
     if (err) return next(providers, mediaURL, options, firstErr || err, callback)
 
+    if (options.verboseP) console.log('\nmediaURL=' + mediaURL + ' oembed=' + JSON.stringify(payload, null, 2))
     resolver(providers, mediaURL, options, payload, firstErr, callback)
   })
 }
@@ -120,6 +121,8 @@ const resolvers = {
           faviconName: payload.author_name || result.title,
           faviconURL: result.image || payload.thumbnail_url
         }
+
+        if (options.verboseP) console.log('\nmediaURL=' + mediaURL + ' scraper=' + JSON.stringify(result, null, 2))
         underscore.extend(publisherInfo, {
           TLD: publisherInfo.publisher.split(':')[0],
           SLD: publisherInfo.publisher,
