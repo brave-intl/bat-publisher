@@ -3,7 +3,6 @@ const url = require('url')
 
 const Joi = require('joi')
 const datax = require('data-expression')
-const jsdom = require('jsdom').jsdom
 const npminfo = require('./package.json')
 const random = require('random-lib')
 const tldjs = require('tldjs')
@@ -35,6 +34,8 @@ const schema = Joi.array().min(1).items(Joi.object().keys(
 
 const providerRE = /^([A-Za-z0-9][A-Za-z0-9-]{0,62})#([A-Za-z0-9][A-Za-z0-9-]{0,62}):(([A-Za-z0-9-._~]|%[0-9A-F]{2})+)$/
 
+let jsdom
+
 const getPublisher = (location, markup, ruleset) => {
   const props = getPublisherProps(location)
   let consequent, i, result, rule
@@ -45,6 +46,9 @@ const getPublisher = (location, markup, ruleset) => {
     ruleset = markup
     markup = undefined
   }
+
+  if (!jsdom) jsdom = require('jsdom').jsdom
+
   if (!ruleset) ruleset = module.exports.ruleset
   for (i = 0; i < ruleset.length; i++) {
     rule = ruleset[i]
@@ -441,16 +445,20 @@ Synopsis.prototype.prune = function (then) {
 module.exports = {
   getPublisher: getPublisher,
   getPublisherProps: getPublisherProps,
-  getCategories: require('./categories'),
-  getRules: require('./categories').all,
-  getMedia: require('./getMedia'),
+  getCategories: () => { return require('./categories') },
+  getRules: (done) => { return require('./categories').all(done) },
+  getMedia: () => { return require('./getMedia') },
   isPublisher: isPublisher,
 // Note - the rules are dynamically built via the 'npm run build-rules' script (do not edit the rules/index.js file directly)
-  ruleset: require('./rules'),
+  ruleset: () => { return require('./rules') },
   schema: schema,
   Synopsis: Synopsis,
   version: npminfo.version
 }
 
-const validity = Joi.validate(module.exports.ruleset, schema)
-if (validity.error) throw new Error(validity.error)
+if (process.env.LEDGER_DEBUG) {
+  const ruleset = typeof module.exports.ruleset === 'function' ? module.exports.ruleset() : module.exports.ruleset
+  const validity = Joi.validate(ruleset, schema)
+
+  if (validity.error) throw new Error(validity.error)
+}
