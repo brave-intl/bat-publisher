@@ -77,8 +77,8 @@ const getPublisher = (location, markup, ruleset) => {
   }
 }
 
-const getPublisherProps = (location) => {
-  const provider = providerRE.exec(location)
+const getPublisherProps = (publisher) => {
+  const provider = providerRE.exec(publisher)
   let props
 
   if (provider) {
@@ -101,15 +101,15 @@ const getPublisherProps = (location) => {
     return props
   }
 
-  if (location.indexOf('://') === -1) location = 'https://' + location
-  props = url.parse(location, true)
-  if ((!props) || (!tldjs.isValid(props.hostname))) return
+  props = tldjs.parse(publisher)
+  if ((!props) || (!props.isValid) || (!props.publicSuffix)) return false
 
-  props.TLD = tldjs.getPublicSuffix(props.hostname)
-  if (!props.TLD) return
+  if (publisher.indexOf(':') === -1) publisher = 'https://' + publisher
+  props = url.parse(publisher, true)
+  if ((!props) || (props.hash) || (props.search)) return
 
   props = underscore.mapObject(props, (value /* , key */) => { if (!underscore.isFunction(value)) return value })
-  props.URL = location
+  props.URL = publisher
   props.SLD = tldjs.getDomain(props.hostname)
   props.RLD = tldjs.getSubdomain(props.hostname)
   props.QLD = props.RLD ? underscore.last(props.RLD.split('.')) : ''
@@ -120,17 +120,16 @@ const getPublisherProps = (location) => {
 //  cf., https://github.com/brave-intl/bat-publisher#syntax
 
 const isPublisher = (publisher) => {
-  const parts = publisher.split('/')
   let props
 
   if (providerRE.test(publisher)) return true
 
-  // we could use an RE, but why reproduce all that effort?
-  if (!tldjs.isValid(parts[0])) return false
-  if (parts.length === 1) return true
+  props = tldjs.parse(publisher)
+  if ((!props) || (!props.isValid) || (!props.publicSuffix)) return false
 
-  props = url.parse('https://' + publisher)
-  return ((!!props) && (!props.hash) && (!props.search))
+  if (publisher.indexOf(':') === -1) publisher = 'https://' + publisher
+  props = url.parse(publisher)
+  return ((props) && (!props.hash) && (!props.search))
 }
 
 const Synopsis = function (options) {
