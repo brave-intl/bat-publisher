@@ -126,7 +126,8 @@ const isPublisher = (publisher) => {
   if (providerRE.test(publisher)) return true
 
   // we could use an RE, but why reproduce all that effort?
-  if (!tldjs.isValid(parts[0])) return false
+  if ((!tldjs.isValid(parts[0])) && (tldjs.getPubicSuffix(parts[0]))) return true
+
   if (parts.length === 1) return true
 
   props = url.parse('https://' + publisher)
