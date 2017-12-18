@@ -131,7 +131,12 @@ const resolvers = {
           URL: publisherInfo.publisherURL
         })
 
-        getFaviconForPublisher(publisherInfo, options, callback)
+        try {
+          getFaviconForPublisher(publisherInfo, options, callback)
+        } catch (err) {
+          if (options.verboseP) console.log('\ngetFavIconforPublisher=' + publisherInfo.faviconURL + ': ' + err.toString())
+          return callback(null, publisherInfo)
+        }
       }).catch((err) => {
         next(providers, mediaURL, options, firstErr || err, callback)
       })
@@ -144,12 +149,23 @@ const next = (providers, mediaURL, options, firstErr, callback) => {
 }
 
 const getFaviconForPublisher = (publisherInfo, options, callback) => {
-  let parts
+  let parts, parts0
 
   if (!publisherInfo.faviconURL) return callback(null, publisherInfo)
 
   parts = url.parse(publisherInfo.faviconURL)
   if (!parts) return callback(new Error('invalid faviconURL: ' + publisherInfo.faviconURL))
+
+  if ((!parts.protocol) || (!parts.host)) {
+    parts0 = url.parse(publisherInfo.publisherURL)
+    if (!parts0) return callback(new Error('invalid publisherURL: ' + publisherInfo.publisherURL))
+
+    if (!parts.protocol) parts.protocol = parts0.protocol
+    if (!parts.host) parts.host = parts0.host
+    if (!parts.port) parts.port = parts0.port
+    if (!parts.hostname) parts.hostname = parts0.hostname
+    publisherInfo.faviconURL = url.format(parts)
+  }
 
   cachedTrip({
     server: parts.protocol + '//' + parts.host,
