@@ -122,6 +122,8 @@ const resolvers = {
           faviconURL: result.image || payload.thumbnail_url
         }
 
+        if (publisherInfo.faviconURL !== payload.thumbnail_url) publisherInfo.faviconURL2 = payload.thumbnail_url
+
         if (options.verboseP) console.log('\nmediaURL=' + mediaURL + ' scraper=' + JSON.stringify(result, null, 2))
         underscore.extend(publisherInfo, {
           TLD: publisherInfo.publisher.split(':')[0],
@@ -136,12 +138,16 @@ const resolvers = {
             console.log('\ngetPropertiesForPublisher=' + publisherInfo.publisher + ': ' + err.toString())
           }
 
-          getFaviconForPublisher(publisherInfo, options, (err, result) => {
-            if ((err) && (options.verboseP)) {
-              console.log('\ngetFavIconforPublisher=' + publisherInfo.faviconURL + ': ' + err.toString())
-            }
+          getFaviconForPublisher(publisherInfo, publisherInfo.faviconURL, options, (err, result) => {
+            if (!err) return callback(null, publisherInfo)
 
-            return callback(null, publisherInfo)
+            if (options.verboseP) console.log('\ngetFavIconforPublisher=' + publisherInfo.faviconURL + ': ' + err.toString())
+
+            getFaviconForPublisher(publisherInfo, publisherInfo.faviconURL2, options, (err, result) => {
+              if (!err) return callback(null, publisherInfo)
+
+              if (options.verboseP) console.log('\ngetFavIconforPublisher=' + publisherInfo.faviconURL + ': ' + err.toString())
+            })
           })
         })
       }).catch((err) => {
@@ -176,13 +182,13 @@ const getPropertiesForPublisher = (publisherInfo, options, callback) => {
   })
 }
 
-const getFaviconForPublisher = (publisherInfo, options, callback) => {
+const getFaviconForPublisher = (publisherInfo, faviconURL, options, callback) => {
   let parts, parts0
 
-  if (!publisherInfo.faviconURL) return callback(null, publisherInfo)
+  if (!faviconURL) return callback(null, publisherInfo)
 
-  parts = url.parse(publisherInfo.faviconURL)
-  if (!parts) return callback(new Error('invalid faviconURL: ' + publisherInfo.faviconURL))
+  parts = url.parse(faviconURL)
+  if (!parts) return callback(new Error('invalid faviconURL: ' + faviconURL))
 
   if ((!parts.protocol) || (!parts.host)) {
     parts0 = url.parse(publisherInfo.publisherURL)
@@ -192,7 +198,7 @@ const getFaviconForPublisher = (publisherInfo, options, callback) => {
     if (!parts.host) parts.host = parts0.host
     if (!parts.port) parts.port = parts0.port
     if (!parts.hostname) parts.hostname = parts0.hostname
-    publisherInfo.faviconURL = url.format(parts)
+    faviconURL = url.format(parts)
   }
 
   cachedTrip({
