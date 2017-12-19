@@ -122,6 +122,8 @@ const resolvers = {
           faviconURL: result.image || payload.thumbnail_url
         }
 
+        if (publisherInfo.faviconURL !== payload.thumbnail_url) publisherInfo.faviconURL2 = payload.thumbnail_url
+
         if (options.verboseP) console.log('\nmediaURL=' + mediaURL + ' scraper=' + JSON.stringify(result, null, 2))
         underscore.extend(publisherInfo, {
           TLD: publisherInfo.publisher.split(':')[0],
@@ -131,12 +133,23 @@ const resolvers = {
           URL: publisherInfo.publisherURL
         })
 
-        try {
-          getFaviconForPublisher(publisherInfo, options, callback)
-        } catch (err) {
-          if (options.verboseP) console.log('\ngetFavIconforPublisher=' + publisherInfo.faviconURL + ': ' + err.toString())
-          return callback(null, publisherInfo)
-        }
+        getPropertiesForPublisher(publisherInfo, options, (err, result) => {
+          if ((err) && (options.verboseP)) {
+            console.log('\ngetPropertiesForPublisher=' + publisherInfo.publisher + ': ' + err.toString())
+          }
+
+          getFaviconForPublisher(publisherInfo, publisherInfo.faviconURL, options, (err, result) => {
+            if (!err) return callback(null, publisherInfo)
+
+            if (options.verboseP) console.log('\ngetFavIconforPublisher=' + publisherInfo.faviconURL + ': ' + err.toString())
+
+            getFaviconForPublisher(publisherInfo, publisherInfo.faviconURL2, options, (err, result) => {
+              if (!err) return callback(null, publisherInfo)
+
+              if (options.verboseP) console.log('\ngetFavIconforPublisher=' + publisherInfo.faviconURL + ': ' + err.toString())
+            })
+          })
+        })
       }).catch((err) => {
         next(providers, mediaURL, options, firstErr || err, callback)
       })
@@ -146,51 +159,6 @@ const resolvers = {
 
 const next = (providers, mediaURL, options, firstErr, callback) => {
   getPublisherFromProviders(underscore.rest(providers), mediaURL, options, firstErr, callback)
-}
-
-const getFaviconForPublisher = (publisherInfo, options, callback) => {
-  let parts, parts0
-
-  if (!publisherInfo.faviconURL) return callback(null, publisherInfo)
-
-  parts = url.parse(publisherInfo.faviconURL)
-  if (!parts) return callback(new Error('invalid faviconURL: ' + publisherInfo.faviconURL))
-
-  if ((!parts.protocol) || (!parts.host)) {
-    parts0 = url.parse(publisherInfo.publisherURL)
-    if (!parts0) return callback(new Error('invalid publisherURL: ' + publisherInfo.publisherURL))
-
-    if (!parts.protocol) parts.protocol = parts0.protocol
-    if (!parts.host) parts.host = parts0.host
-    if (!parts.port) parts.port = parts0.port
-    if (!parts.hostname) parts.hostname = parts0.hostname
-    publisherInfo.faviconURL = url.format(parts)
-  }
-
-  cachedTrip({
-    server: parts.protocol + '//' + parts.host,
-    path: parts.path,
-    timeout: options.timeout
-  }, underscore.extend({ binaryP: true }, options), (err, response, body) => {
-    if (err) return callback(err)
-
-    jimp.read(body, (err, image) => {
-      const bitmap = image && image.bitmap
-
-      if (err) return callback(err)
-
-      const dataURL = (err, base64) => {
-        if (err) return callback(err)
-
-        publisherInfo.faviconURL = base64
-        getPropertiesForPublisher(publisherInfo, options, callback)
-      }
-
-      if ((bitmap.width <= 32) || (bitmap.height <= 32)) return image.getBase64(jimp.AUTO, dataURL)
-
-      image.resize(32, 32).getBase64(jimp.AUTO, dataURL)
-    })
-  })
 }
 
 const getPropertiesForPublisher = (publisherInfo, options, callback) => {
@@ -211,6 +179,51 @@ const getPropertiesForPublisher = (publisherInfo, options, callback) => {
     if (!err) publisherInfo.properties = payload.properties || {}
 
     callback(null, publisherInfo)
+  })
+}
+
+const getFaviconForPublisher = (publisherInfo, faviconURL, options, callback) => {
+  let parts, parts0
+
+  if (!faviconURL) return callback(null, publisherInfo)
+
+  parts = url.parse(faviconURL)
+  if (!parts) return callback(new Error('invalid faviconURL: ' + faviconURL))
+
+  if ((!parts.protocol) || (!parts.host)) {
+    parts0 = url.parse(publisherInfo.publisherURL)
+    if (!parts0) return callback(new Error('invalid publisherURL: ' + publisherInfo.publisherURL))
+
+    if (!parts.protocol) parts.protocol = parts0.protocol
+    if (!parts.host) parts.host = parts0.host
+    if (!parts.port) parts.port = parts0.port
+    if (!parts.hostname) parts.hostname = parts0.hostname
+    faviconURL = url.format(parts)
+  }
+
+  cachedTrip({
+    server: parts.protocol + '//' + parts.host,
+    path: parts.path,
+    timeout: options.timeout
+  }, underscore.extend({ binaryP: true }, options), (err, response, body) => {
+    if (err) return callback(err)
+
+    jimp.read(body, (err, image) => {
+      const bitmap = image && image.bitmap
+
+      if (err) return callback(err)
+
+      const dataURL = (err, base64) => {
+        if (err) return callback(err)
+
+        publisherInfo.faviconURL = base64
+        callback(null, publisherInfo)
+      }
+
+      if ((bitmap.width <= 32) || (bitmap.height <= 32)) return image.getBase64(jimp.AUTO, dataURL)
+
+      image.resize(32, 32).getBase64(jimp.AUTO, dataURL)
+    })
   })
 }
 
