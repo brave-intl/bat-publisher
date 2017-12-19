@@ -131,12 +131,19 @@ const resolvers = {
           URL: publisherInfo.publisherURL
         })
 
-        try {
-          getFaviconForPublisher(publisherInfo, options, callback)
-        } catch (err) {
-          if (options.verboseP) console.log('\ngetFavIconforPublisher=' + publisherInfo.faviconURL + ': ' + err.toString())
-          return callback(null, publisherInfo)
-        }
+        getPropertiesForPublisher(publisherInfo, options, (err, result) => {
+          if ((err) && (options.verboseP)) {
+            console.log('\ngetPropertiesForPublisher=' + publisherInfo.publisher + ': ' + err.toString())
+          }
+
+          getFaviconForPublisher(publisherInfo, options, (err, result) => {
+            if ((err) && (options.verboseP)) {
+              console.log('\ngetFavIconforPublisher=' + publisherInfo.faviconURL + ': ' + err.toString())
+            }
+
+            return callback(null, publisherInfo)
+          })
+        })
       }).catch((err) => {
         next(providers, mediaURL, options, firstErr || err, callback)
       })
@@ -146,6 +153,27 @@ const resolvers = {
 
 const next = (providers, mediaURL, options, firstErr, callback) => {
   getPublisherFromProviders(underscore.rest(providers), mediaURL, options, firstErr, callback)
+}
+
+const getPropertiesForPublisher = (publisherInfo, options, callback) => {
+  const servers = {
+    staging: {
+      v2: 'https://ledger-staging.mercury.basicattentiontoken.org'
+    },
+    production: {
+      v2: 'https://ledger.mercury.basicattentiontoken.org'
+    }
+  }
+
+  retryTrip({
+    server: servers[options.environment || 'production'][options.version || 'v2'],
+    path: '/v3/publisher/identity?' + querystring.stringify({ publisher: publisherInfo.publisher }),
+    timeout: options.timeout
+  }, options, (err, response, payload) => {
+    if (!err) publisherInfo.properties = payload.properties || {}
+
+    callback(null, publisherInfo)
+  })
 }
 
 const getFaviconForPublisher = (publisherInfo, options, callback) => {
@@ -183,34 +211,13 @@ const getFaviconForPublisher = (publisherInfo, options, callback) => {
         if (err) return callback(err)
 
         publisherInfo.faviconURL = base64
-        getPropertiesForPublisher(publisherInfo, options, callback)
+        callback(null, publisherInfo)
       }
 
       if ((bitmap.width <= 32) || (bitmap.height <= 32)) return image.getBase64(jimp.AUTO, dataURL)
 
       image.resize(32, 32).getBase64(jimp.AUTO, dataURL)
     })
-  })
-}
-
-const getPropertiesForPublisher = (publisherInfo, options, callback) => {
-  const servers = {
-    staging: {
-      v2: 'https://ledger-staging.mercury.basicattentiontoken.org'
-    },
-    production: {
-      v2: 'https://ledger.mercury.basicattentiontoken.org'
-    }
-  }
-
-  retryTrip({
-    server: servers[options.environment || 'production'][options.version || 'v2'],
-    path: '/v3/publisher/identity?' + querystring.stringify({ publisher: publisherInfo.publisher }),
-    timeout: options.timeout
-  }, options, (err, response, payload) => {
-    if (!err) publisherInfo.properties = payload.properties || {}
-
-    callback(null, publisherInfo)
   })
 }
 
