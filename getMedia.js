@@ -27,6 +27,14 @@ const getPublisherFromMediaProps = (mediaProps, options, callback) => {
 }
 
 const mappers = {
+  twitch: (mediaProps) => {
+    const mediaId = mediaProps.mediaId
+
+    if (!mediaId) throw new Error('expecting mediaId for provider Twitch')
+
+    return ('https://www.twitch.tv/videos/' + mediaId)
+  },
+
   youtube: (mediaProps) => {
     const mediaId = mediaProps.mediaId
 
@@ -37,7 +45,7 @@ const mappers = {
 }
 
 const getPublisherFromMediaURL = (mediaURL, options, callback) => {
-  let parts, providers
+  let domains, hostname, parts, providers
 
   if (typeof options === 'function') {
     callback = options
@@ -51,12 +59,17 @@ const getPublisherFromMediaURL = (mediaURL, options, callback) => {
   else throw new Error('security audit requires options.roundtrip for non-debug use')
 
   parts = url.parse(mediaURL)
-  if ((parts) && (parts.protocol !== 'https:')) return setTimeout(() => { callback(new Error('non-https URL'), null) }, 0)
+  if ((!parts) || (parts.protocol !== 'https:')) return setTimeout(() => { callback(new Error('invalid URL'), null) }, 0)
+
+  hostname = parts.hostname
+  domains = [ hostname, tldjs.getDomain(hostname) ]
+
+  if (hostname.indexOf('www.') === 0) domains.push('api.' + hostname.substr(4))
 
   providers = underscore.filter(options.ruleset, (rule) => {
     const schemes = rule.schemes
 
-    if (!schemes.length) return ((parts) && (tldjs.getDomain(parts.hostname) === rule.domain))
+    if (!schemes.length) return (domains.indexOf(rule.domain) !== -1)
 
     for (let scheme in schemes) if (mediaURL.match(new RegExp(scheme.replace(/\*/g, '(.*)'), 'i'))) return true
   })
@@ -78,6 +91,7 @@ const getPublisherFromProviders = (providers, mediaURL, options, firstErr, callb
   if (!resolver) return done(new Error('no resolver for ' + provider.provider_name))
 
   parts = url.parse(provider.url + '?' + querystring.stringify({ format: 'json', url: mediaURL }))
+
   retryTrip({
     server: parts.protocol + '//' + parts.host,
     path: parts.path,
@@ -91,13 +105,13 @@ const getPublisherFromProviders = (providers, mediaURL, options, firstErr, callb
 }
 
 const resolvers = {
-  YouTube: (providers, mediaURL, options, payload, firstErr, callback) => {
+  _channel: (providers, mediaURL, options, payload, firstErr, callback) => {
     const provider = underscore.first(providers)
     const parts = url.parse(payload.author_url)
     let paths
 
     paths = parts && parts.pathname.split('/')
-    if ((!paths) || (paths.length !== 3)) throw new Error('invalid author_url: ' + payload.author_url)
+    if ((!paths) || (!payload._channel.validP(paths))) throw new Error('invalid author_url: ' + payload.author_url)
 
     cachedTrip({
       server: parts.protocol + '//' + parts.host,
@@ -107,12 +121,12 @@ const resolvers = {
       if (err) return next(providers, mediaURL, options, firstErr || err, callback)
 
       metascraper.scrapeHtml(body).then((result) => {
+        console.log('result: ' + JSON.stringify(result, null, 2))
+
         const parts = url.parse(result.url)
-        const cpaths = parts && parts.pathname.split('/')
-        const channel = (parts.pathname === parts.path) && (cpaths.length === 3) && (cpaths[1] === 'channel')
-              ? cpaths[2] : paths[2]
+        const channel = payload._channel.get(paths, parts)
         const publisherInfo = {
-          publisher: 'youtube#channel:' + channel,
+          publisher: payload._channel.providerName + '#channel:' + channel,
           publisherType: 'provider',
           publisherURL: payload.author_url + '/videos',
           providerName: provider.provider_name,
@@ -154,6 +168,35 @@ const resolvers = {
         next(providers, mediaURL, options, firstErr || err, callback)
       })
     })
+  },
+
+  Twitch: (providers, mediaURL, options, payload, firstErr, callback) => {
+    resolvers._channel(providers, mediaURL, options, underscore.extend({
+      _channel: {
+        providerName: 'twitch',
+        param1: 2,
+        validP: (paths) => { return (paths.length === 2) },
+        get: (paths, parts) => {
+          const cpaths = parts && parts.pathname.split('/')
+
+          return ((parts.pathname === parts.path) && (cpaths.length === 2) ? cpaths[1] : paths[1])
+        }
+      }
+    }, payload), firstErr, callback)
+  },
+
+  YouTube: (providers, mediaURL, options, payload, firstErr, callback) => {
+    resolvers._channel(providers, mediaURL, options, underscore.extend({
+      _channel: {
+        providerName: 'youtube',
+        validP: (paths) => { return (paths.length === 3) },
+        get: (paths, parts) => {
+          const cpaths = parts && parts.pathname.split('/')
+
+          return ((parts.pathname === parts.path) && (cpaths.length === 3) && (cpaths[1] === 'channel') ? cpaths[2] : paths[2])
+        }
+      }
+    }, payload), firstErr, callback)
   }
 }
 
