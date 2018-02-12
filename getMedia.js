@@ -121,8 +121,6 @@ const resolvers = {
       if (err) return next(providers, mediaURL, options, firstErr || err, callback)
 
       metascraper.scrapeHtml(body).then((result) => {
-        console.log('result: ' + JSON.stringify(result, null, 2))
-
         const parts = url.parse(result.url)
         const channel = payload._channel.get(paths, parts)
         const publisherInfo = {
