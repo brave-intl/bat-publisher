@@ -117,7 +117,7 @@ const resolvers = {
       server: parts.protocol + '//' + parts.host,
       path: parts.path,
       timeout: options.timeout
-    }, underscore.extend({ rawP: true }, options), (err, response, body) => {
+    }, underscore.extend({ windowP: true }, options), (err, response, body) => {
       if (err) return next(providers, mediaURL, options, firstErr || err, callback)
 
       metascraper.scrapeHtml(body).then((result) => {
@@ -325,7 +325,7 @@ const roundTrip = (params, options, callback) => {
 
   params = underscore.defaults(underscore.extend(underscore.pick(parts, 'protocol', 'hostname', 'port'), params),
                                { method: params.payload ? 'POST' : 'GET' })
-  if (options.binaryP) options.rawP = true
+  if (options.binaryP || options.windowP) options.rawP = true
   if (options.debugP) console.log('\nparams=' + JSON.stringify(params, null, 2))
 
   request = client.request(underscore.omit(params, [ 'payload', 'timeout' ]), (response) => {
