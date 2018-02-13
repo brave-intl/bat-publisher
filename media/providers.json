@@ -1,5 +1,12 @@
 [
   {
+    "provider_name": "Twitch",
+    "provider_url": "https://www.twitch.tv",
+    "schemes": [],
+    "domain": "api.twitch.tv",
+    "url": "https://api.twitch.tv/v4/oembed"
+  },
+  {
     "provider_name": "YouTube",
     "provider_url": "https://www.youtube.com/",
     "schemes": [],

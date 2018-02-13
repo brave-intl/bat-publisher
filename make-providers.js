@@ -2,11 +2,13 @@ const underscore = require('underscore')
 
 const rules = require('./node_modules/oembed-parser/src/utils/providers.json')
 
+const providers = [ 'Twitch', 'YouTube' ]
+
 const ruleset = []
 rules.forEach((rule) => {
   let domain, endpoint, match
 
-  if (rule.provider_name !== 'YouTube') return
+  if (providers.indexOf(rule.provider_name) === -1) return
 
   endpoint = rule.endpoints[0].url
   match = endpoint.match(/:\/\/(www[0-9]?\.)?(.[^/:]+)/i)

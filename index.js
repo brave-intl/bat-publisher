@@ -77,9 +77,19 @@ const getPublisher = (location, markup, ruleset) => {
   }
 }
 
+const publisherURLs = {
+  twitch: (props) => {
+    if (props.providerSuffix === 'channel') return ('https://www.twitch.tv/' + props.providerValue)
+  },
+
+  youtube: (props) => {
+    if (props.providerSuffix === 'channel') return ('https://www.youtube.com/channel/' + props.providerValue)
+  }
+}
+
 const getPublisherProps = (publisher) => {
   const provider = providerRE.exec(publisher)
-  let props
+  let f, props, providerURL
 
   if (provider) {
     props = {
@@ -89,15 +99,18 @@ const getPublisherProps = (publisher) => {
       providerSuffix: provider[2],
       providerValue: querystring.unescape(provider[3])
     }
+
+    f = publisherURLs[props.providerName.toLowerCase()]
+    providerURL = f && f(props)
+    if (providerURL) props.URL = providerURL
+
     underscore.extend(props, {
       TLD: props.publisher.split(':')[0],
       SLD: props.publisher,
       RLD: props.providerValue,
       QLD: ''
     })
-    if ((props.providerName.toLowerCase() === 'youtube') && (props.providerSuffix === 'channel')) {
-      props.URL = 'https://www.youtube.com/channel/' + props.providerValue
-    }
+
     return props
   }
 
