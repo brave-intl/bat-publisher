@@ -92,7 +92,7 @@ const getPublisherFromProviders = (providers, mediaURL, options, firstErr, callb
 
   parts = url.parse(provider.url + '?' + querystring.stringify({ format: 'json', url: mediaURL }))
 
-  retryTrip({
+  cachedTrip({
     server: parts.protocol + '//' + parts.host,
     path: parts.path,
     timeout: options.timeout
@@ -100,6 +100,8 @@ const getPublisherFromProviders = (providers, mediaURL, options, firstErr, callb
     if (err) return next(providers, mediaURL, options, firstErr || err, callback)
 
     if (options.verboseP) console.log('\nmediaURL=' + mediaURL + ' oembed=' + JSON.stringify(payload, null, 2))
+    if (!payload) return next(providers, mediaURL, options, firstErr, callback)
+
     resolver(providers, mediaURL, options, payload, firstErr, callback)
   })
 }
@@ -113,18 +115,59 @@ const resolvers = {
     paths = parts && parts.pathname.split('/')
     if ((!paths) || (!payload._channel.validP(paths))) throw new Error('invalid author_url: ' + payload.author_url)
 
+    const inner = (publisherInfo) => {
+      underscore.extend(publisherInfo, {
+        TLD: publisherInfo.publisher.split(':')[0],
+        SLD: publisherInfo.publisher,
+        RLD: publisherInfo.providerValue,
+        QLD: '',
+        URL: publisherInfo.publisherURL
+      })
+
+      getPropertiesForPublisher(publisherInfo, options, (err, result) => {
+        if ((err) && (options.verboseP)) {
+          console.log('\ngetPropertiesForPublisher=' + publisherInfo.publisher + ': ' + err.toString())
+        }
+
+        getFaviconForPublisher(publisherInfo, publisherInfo.faviconURL, options, (err, result) => {
+          if (!err) return callback(null, publisherInfo)
+
+          if (options.verboseP) console.log('\ngetFavIconforPublisher=' + publisherInfo.faviconURL + ': ' + err.toString())
+
+          getFaviconForPublisher(publisherInfo, publisherInfo.faviconURL2, options, (err, result) => {
+            if (!err) return callback(null, publisherInfo)
+
+            if (options.verboseP) console.log('\ngetFavIconforPublisher=' + publisherInfo.faviconURL + ': ' + err.toString())
+          })
+        })
+      })
+    }
+
+// perhaps later... `payload` above has video metadata, `result` below has author metadata
+    if ((payload._channel.optimizeP) && (payload.author_url) && (payload.author_name) && (payload.thumbnail_url)) {
+      return inner({
+        publisher: payload._channel.providerName + '#channel:' + payload._channel.get(paths, parts),
+        publisherType: 'provider',
+        publisherURL: payload.author_url + '/videos',
+        providerName: provider.provider_name,
+        providerSuffix: 'channel',
+        providerValue: paths[2],
+        faviconName: payload.author_name,
+        faviconURL: payload.thumbnail_url
+      })
+    }
+
     cachedTrip({
       server: parts.protocol + '//' + parts.host,
       path: parts.path,
-      timeout: options.timeout
+      timeout: options.timeouut
     }, underscore.extend({ scrapeP: true }, options), (err, response, body) => {
       if (err) return next(providers, mediaURL, options, firstErr || err, callback)
 
       metascraper.scrapeHtml(body).then((result) => {
         const parts = url.parse(result.url)
-        const channel = payload._channel.get(paths, parts)
         const publisherInfo = {
-          publisher: payload._channel.providerName + '#channel:' + channel,
+          publisher: payload._channel.providerName + '#channel:' + payload._channel.get(paths, parts),
           publisherType: 'provider',
           publisherURL: payload.author_url + '/videos',
           providerName: provider.provider_name,
@@ -135,33 +178,8 @@ const resolvers = {
         }
 
         if (publisherInfo.faviconURL !== payload.thumbnail_url) publisherInfo.faviconURL2 = payload.thumbnail_url
-
         if (options.verboseP) console.log('\nmediaURL=' + mediaURL + ' scraper=' + JSON.stringify(result, null, 2))
-        underscore.extend(publisherInfo, {
-          TLD: publisherInfo.publisher.split(':')[0],
-          SLD: publisherInfo.publisher,
-          RLD: publisherInfo.providerValue,
-          QLD: '',
-          URL: publisherInfo.publisherURL
-        })
-
-        getPropertiesForPublisher(publisherInfo, options, (err, result) => {
-          if ((err) && (options.verboseP)) {
-            console.log('\ngetPropertiesForPublisher=' + publisherInfo.publisher + ': ' + err.toString())
-          }
-
-          getFaviconForPublisher(publisherInfo, publisherInfo.faviconURL, options, (err, result) => {
-            if (!err) return callback(null, publisherInfo)
-
-            if (options.verboseP) console.log('\ngetFavIconforPublisher=' + publisherInfo.faviconURL + ': ' + err.toString())
-
-            getFaviconForPublisher(publisherInfo, publisherInfo.faviconURL2, options, (err, result) => {
-              if (!err) return callback(null, publisherInfo)
-
-              if (options.verboseP) console.log('\ngetFavIconforPublisher=' + publisherInfo.faviconURL + ': ' + err.toString())
-            })
-          })
-        })
+        inner(publisherInfo)
       }).catch((err) => {
         next(providers, mediaURL, options, firstErr || err, callback)
       })
@@ -309,8 +327,11 @@ const retryTrip = (params, options, callback, retry) => {
   method = method(retry.delay)
 
   options.roundtrip(params, options, (err, response, payload) => {
-    const code = Math.floor(response.statusCode / 100)
+    let code
 
+    if (!response) return callback(err, response, payload)
+
+    code = Math.floor(response.statusCode / 100)
     if ((!err) || (code !== 5) || (retry.retries-- < 0)) return callback(err, response, payload)
 
     return setTimeout(() => { retryTrip(params, options, callback, retry) }, method(++retry.tries))
