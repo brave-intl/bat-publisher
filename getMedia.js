@@ -143,8 +143,7 @@ const resolvers = {
       })
     }
 
-// perhaps later... `payload` above has video metadata, `result` below has author metadata
-    if ((payload._channel.optimizeP) && (payload.author_url) && (payload.author_name) && (payload.thumbnail_url)) {
+    if ((payload._channel.optimizeP) && (payload.author_url) && (payload.author_name) && (payload.author_thumbnail_url)) {
       return inner({
         publisher: payload._channel.providerName + '#channel:' + payload._channel.get(paths, parts),
         publisherType: 'provider',
@@ -153,7 +152,8 @@ const resolvers = {
         providerSuffix: 'channel',
         providerValue: paths[2],
         faviconName: payload.author_name,
-        faviconURL: payload.thumbnail_url
+        faviconURL: payload.author_thumbnail_url,
+        faviconURL2: payload.thumbnail_url
       })
     }
 
@@ -191,6 +191,7 @@ const resolvers = {
       _channel: {
         providerName: 'twitch',
         param1: 2,
+        optimizeP: true,
         validP: (paths) => { return (paths.length === 2) },
         get: (paths, parts) => {
           const cpaths = parts && parts.pathname.split('/')
