@@ -29,16 +29,15 @@ const getPublisherFromMediaProps = (mediaProps, options, callback) => {
 const mappers = {
   twitch: (mediaProps) => {
     const mediaId = mediaProps.mediaId
+    let parts
 
     if (!mediaId) throw new Error('expecting mediaId for provider Twitch')
 
-    if (mediaId.includes('_vod_')) {
-      const parts = mediaId.split('_vod_')
-      return `https://www.twitch.tv/${parts[0]}/v/${parts[1]}`
-    }
+    if (mediaId.indexOf('_vod_') === -1) return ('https://www.twitch.tv/' + mediaId)
 
     // TODO we need to define which url to use for live stream for oembed
-    return `https://www.twitch.tv/${mediaId}`
+    parts = mediaId.split('_vod_')
+    return ('https://www.twitch.tv/' + parts[0] + '/v/' + parts[1])
   },
 
   youtube: (mediaProps) => {
