@@ -100,7 +100,7 @@ const getPublisherFromProviders = (providers, mediaURL, options, firstErr, callb
     if (err) return next(providers, mediaURL, options, firstErr || err, callback)
 
     if (options.verboseP) console.log('\nmediaURL=' + mediaURL + ' oembed=' + JSON.stringify(payload, null, 2))
-    if (!payload) return next(providers, mediaURL, options, firstErr, callback)
+    if (!payload) return next(providers, mediaURL, options, firstErr || new Error('empty oembed result'), callback)
 
     resolver(providers, mediaURL, options, payload, firstErr, callback)
   })
@@ -143,19 +143,7 @@ const resolvers = {
       })
     }
 
-    if ((payload._channel.optimizeP) && (payload.author_url) && (payload.author_name) && (payload.author_thumbnail_url)) {
-      return inner({
-        publisher: payload._channel.providerName + '#channel:' + payload._channel.get(paths, parts),
-        publisherType: 'provider',
-        publisherURL: payload.author_url + '/videos',
-        providerName: provider.provider_name,
-        providerSuffix: 'channel',
-        providerValue: paths[2],
-        faviconName: payload.author_name,
-        faviconURL: payload.author_thumbnail_url,
-        faviconURL2: payload.thumbnail_url
-      })
-    }
+    if (payload._channel.publisherInfo) return inner(payload._channel.publisherInfo)
 
     cachedTrip({
       server: parts.protocol + '//' + parts.host,
@@ -187,16 +175,32 @@ const resolvers = {
   },
 
   Twitch: (providers, mediaURL, options, payload, firstErr, callback) => {
+    const parts = url.parse(payload.author_url)
+    const paths = parts && parts.pathname.split('/')
+
+    const get = (paths, parts) => {
+      const cpaths = parts && parts.pathname.split('/')
+
+      return ((parts.pathname === parts.path) && (cpaths.length === 2) ? cpaths[1] : paths[1])
+    }
+
+    let providerValue = get(paths, parts)
+
     resolvers._channel(providers, mediaURL, options, underscore.extend({
       _channel: {
         providerName: 'twitch',
-        param1: 2,
-        optimizeP: true,
         validP: (paths) => { return (paths.length === 2) },
-        get: (paths, parts) => {
-          const cpaths = parts && parts.pathname.split('/')
-
-          return ((parts.pathname === parts.path) && (cpaths.length === 2) ? cpaths[1] : paths[1])
+        get: get,
+        publisherInfo: {
+          publisher: 'twitch#author:' + providerValue,
+          publisherType: 'provider',
+          publisherURL: payload.author_url + '/videos',
+          providerName: 'twitch',
+          providerSuffix: 'author',
+          providerValue: providerValue,
+          faviconName: payload.author_name,
+          faviconURL: payload.author_thumbnail_url,
+          faviconURL2: payload.thumbnail_url
         }
       }
     }, payload), firstErr, callback)
