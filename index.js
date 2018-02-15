@@ -195,6 +195,9 @@ const Synopsis = function (options) {
         delete entry.score
       }
     }
+
+    if (!entry.window) entry.window = []
+
     for (i = 0; i < entry.window.length; i++) {
       if (typeof entry.window[i].scores !== 'undefined') continue
 
