@@ -32,7 +32,13 @@ const mappers = {
 
     if (!mediaId) throw new Error('expecting mediaId for provider Twitch')
 
-    return ('https://www.twitch.tv/videos/' + mediaId)
+    if (mediaId.includes('_vod_')) {
+      const parts = mediaId.split('_vod_')
+      return `https://www.twitch.tv/${parts[0]}/v/${parts[1]}`
+    }
+
+    // TODO we need to define which url to use for live stream for oembed
+    return `https://www.twitch.tv/${mediaId}`
   },
 
   youtube: (mediaProps) => {
