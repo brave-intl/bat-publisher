@@ -148,7 +148,7 @@ const resolvers = {
     cachedTrip({
       server: parts.protocol + '//' + parts.host,
       path: parts.path,
-      timeout: options.timeouut
+      timeout: options.timeout
     }, underscore.extend({ scrapeP: true }, options), (err, response, body) => {
       if (err) return next(providers, mediaURL, options, firstErr || err, callback)
 
