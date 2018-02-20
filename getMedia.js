@@ -105,7 +105,6 @@ const getPublisherFromProviders = (providers, mediaURL, options, firstErr, callb
     if (err) return next(providers, mediaURL, options, firstErr || err, callback)
 
     if (options.verboseP) console.log('\nmediaURL=' + mediaURL + ' oembed=' + JSON.stringify(payload, null, 2))
-    if (!payload) return next(providers, mediaURL, options, firstErr || new Error('empty oembed result'), callback)
 
     resolver(providers, mediaURL, options, payload, firstErr, callback)
   })
@@ -134,6 +133,8 @@ const resolvers = {
           console.log('\ngetPropertiesForPublisher=' + publisherInfo.publisher + ': ' + err.toString())
         }
 
+        if (!publisherInfo.faviconURL && !publisherInfo.faviconURL2) return callback(null, publisherInfo)
+
         getFaviconForPublisher(publisherInfo, publisherInfo.faviconURL, options, (err, result) => {
           if (!err) return callback(null, publisherInfo)
 
@@ -142,7 +143,7 @@ const resolvers = {
           getFaviconForPublisher(publisherInfo, publisherInfo.faviconURL2, options, (err, result) => {
             if (!err) return callback(null, publisherInfo)
 
-            if (options.verboseP) console.log('\ngetFavIconforPublisher=' + publisherInfo.faviconURL + ': ' + err.toString())
+            if (options.verboseP) console.log('\ngetFavIconforPublisher=' + publisherInfo.faviconURL2 + ': ' + err.toString())
           })
         })
       })
@@ -180,6 +181,8 @@ const resolvers = {
   },
 
   Twitch: (providers, mediaURL, options, payload, firstErr, callback) => {
+    if(!payload) payload = { author_url: mediaURL }
+
     const parts = url.parse(payload.author_url)
     const paths = parts && parts.pathname.split('/')
 
@@ -190,6 +193,8 @@ const resolvers = {
     }
 
     let providerValue = get(paths, parts)
+
+    if (!payload.author_name) payload.author_name = providerValue
 
     resolvers._channel(providers, mediaURL, options, underscore.extend({
       _channel: {
@@ -212,6 +217,8 @@ const resolvers = {
   },
 
   YouTube: (providers, mediaURL, options, payload, firstErr, callback) => {
+    if (!payload) return next(providers, mediaURL, options, firstErr || new Error('empty oembed result'), callback)
+
     resolvers._channel(providers, mediaURL, options, underscore.extend({
       _channel: {
         providerName: 'youtube',
