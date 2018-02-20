@@ -35,7 +35,6 @@ const mappers = {
 
     if (mediaId.indexOf('_vod_') === -1) return ('https://www.twitch.tv/' + mediaId)
 
-    // TODO we need to define which url to use for live stream for oembed
     parts = mediaId.split('_vod_')
     return ('https://www.twitch.tv/' + parts[0] + '/v/' + parts[1])
   },
