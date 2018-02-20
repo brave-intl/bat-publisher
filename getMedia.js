@@ -185,6 +185,7 @@ const resolvers = {
 
     const parts = url.parse(payload.author_url)
     const paths = parts && parts.pathname.split('/')
+    const provider = underscore.first(providers)
 
     const get = (paths, parts) => {
       const cpaths = parts && parts.pathname.split('/')
@@ -205,7 +206,7 @@ const resolvers = {
           publisher: 'twitch#author:' + providerValue,
           publisherType: 'provider',
           publisherURL: payload.author_url + '/videos',
-          providerName: 'twitch',
+          providerName: provider.provider_name,
           providerSuffix: 'author',
           providerValue: providerValue,
           faviconName: payload.author_name,
