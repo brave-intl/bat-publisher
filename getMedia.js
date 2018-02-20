@@ -29,10 +29,14 @@ const getPublisherFromMediaProps = (mediaProps, options, callback) => {
 const mappers = {
   twitch: (mediaProps) => {
     const mediaId = mediaProps.mediaId
+    let parts
 
     if (!mediaId) throw new Error('expecting mediaId for provider Twitch')
 
-    return ('https://www.twitch.tv/videos/' + mediaId)
+    if (mediaId.indexOf('_vod_') === -1) return ('https://www.twitch.tv/' + mediaId)
+
+    parts = mediaId.split('_vod_')
+    return ('https://www.twitch.tv/' + parts[0] + '/v/' + parts[1])
   },
 
   youtube: (mediaProps) => {
@@ -92,7 +96,7 @@ const getPublisherFromProviders = (providers, mediaURL, options, firstErr, callb
 
   parts = url.parse(provider.url + '?' + querystring.stringify({ format: 'json', url: mediaURL }))
 
-  retryTrip({
+  cachedTrip({
     server: parts.protocol + '//' + parts.host,
     path: parts.path,
     timeout: options.timeout
@@ -100,6 +104,7 @@ const getPublisherFromProviders = (providers, mediaURL, options, firstErr, callb
     if (err) return next(providers, mediaURL, options, firstErr || err, callback)
 
     if (options.verboseP) console.log('\nmediaURL=' + mediaURL + ' oembed=' + JSON.stringify(payload, null, 2))
+
     resolver(providers, mediaURL, options, payload, firstErr, callback)
   })
 }
@@ -113,18 +118,49 @@ const resolvers = {
     paths = parts && parts.pathname.split('/')
     if ((!paths) || (!payload._channel.validP(paths))) throw new Error('invalid author_url: ' + payload.author_url)
 
+    const inner = (publisherInfo) => {
+      underscore.extend(publisherInfo, {
+        TLD: publisherInfo.publisher.split(':')[0],
+        SLD: publisherInfo.publisher,
+        RLD: publisherInfo.providerValue,
+        QLD: '',
+        URL: publisherInfo.publisherURL
+      })
+
+      getPropertiesForPublisher(publisherInfo, options, (err, result) => {
+        if ((err) && (options.verboseP)) {
+          console.log('\ngetPropertiesForPublisher=' + publisherInfo.publisher + ': ' + err.toString())
+        }
+
+        if (!publisherInfo.faviconURL && !publisherInfo.faviconURL2) return callback(null, publisherInfo)
+
+        getFaviconForPublisher(publisherInfo, publisherInfo.faviconURL, options, (err, result) => {
+          if (!err) return callback(null, publisherInfo)
+
+          if (options.verboseP) console.log('\ngetFavIconforPublisher=' + publisherInfo.faviconURL + ': ' + err.toString())
+
+          getFaviconForPublisher(publisherInfo, publisherInfo.faviconURL2, options, (err, result) => {
+            if (!err) return callback(null, publisherInfo)
+
+            if (options.verboseP) console.log('\ngetFavIconforPublisher=' + publisherInfo.faviconURL2 + ': ' + err.toString())
+          })
+        })
+      })
+    }
+
+    if (payload._channel.publisherInfo) return inner(payload._channel.publisherInfo)
+
     cachedTrip({
       server: parts.protocol + '//' + parts.host,
       path: parts.path,
       timeout: options.timeout
-    }, underscore.extend({ rawP: true }, options), (err, response, body) => {
+    }, underscore.extend({ scrapeP: true }, options), (err, response, body) => {
       if (err) return next(providers, mediaURL, options, firstErr || err, callback)
 
       metascraper.scrapeHtml(body).then((result) => {
         const parts = url.parse(result.url)
-        const channel = payload._channel.get(paths, parts)
         const publisherInfo = {
-          publisher: payload._channel.providerName + '#channel:' + channel,
+          publisher: payload._channel.providerName + '#channel:' + payload._channel.get(paths, parts),
           publisherType: 'provider',
           publisherURL: payload.author_url + '/videos',
           providerName: provider.provider_name,
@@ -135,33 +171,8 @@ const resolvers = {
         }
 
         if (publisherInfo.faviconURL !== payload.thumbnail_url) publisherInfo.faviconURL2 = payload.thumbnail_url
-
         if (options.verboseP) console.log('\nmediaURL=' + mediaURL + ' scraper=' + JSON.stringify(result, null, 2))
-        underscore.extend(publisherInfo, {
-          TLD: publisherInfo.publisher.split(':')[0],
-          SLD: publisherInfo.publisher,
-          RLD: publisherInfo.providerValue,
-          QLD: '',
-          URL: publisherInfo.publisherURL
-        })
-
-        getPropertiesForPublisher(publisherInfo, options, (err, result) => {
-          if ((err) && (options.verboseP)) {
-            console.log('\ngetPropertiesForPublisher=' + publisherInfo.publisher + ': ' + err.toString())
-          }
-
-          getFaviconForPublisher(publisherInfo, publisherInfo.faviconURL, options, (err, result) => {
-            if (!err) return callback(null, publisherInfo)
-
-            if (options.verboseP) console.log('\ngetFavIconforPublisher=' + publisherInfo.faviconURL + ': ' + err.toString())
-
-            getFaviconForPublisher(publisherInfo, publisherInfo.faviconURL2, options, (err, result) => {
-              if (!err) return callback(null, publisherInfo)
-
-              if (options.verboseP) console.log('\ngetFavIconforPublisher=' + publisherInfo.faviconURL + ': ' + err.toString())
-            })
-          })
-        })
+        inner(publisherInfo)
       }).catch((err) => {
         next(providers, mediaURL, options, firstErr || err, callback)
       })
@@ -169,21 +180,45 @@ const resolvers = {
   },
 
   Twitch: (providers, mediaURL, options, payload, firstErr, callback) => {
+    if(!payload) payload = { author_url: mediaURL }
+
+    const parts = url.parse(payload.author_url)
+    const paths = parts && parts.pathname.split('/')
+    const provider = underscore.first(providers)
+
+    const get = (paths, parts) => {
+      const cpaths = parts && parts.pathname.split('/')
+
+      return ((parts.pathname === parts.path) && (cpaths.length === 2) ? cpaths[1] : paths[1])
+    }
+
+    let providerValue = get(paths, parts)
+
+    if (!payload.author_name) payload.author_name = providerValue
+
     resolvers._channel(providers, mediaURL, options, underscore.extend({
       _channel: {
         providerName: 'twitch',
-        param1: 2,
         validP: (paths) => { return (paths.length === 2) },
-        get: (paths, parts) => {
-          const cpaths = parts && parts.pathname.split('/')
-
-          return ((parts.pathname === parts.path) && (cpaths.length === 2) ? cpaths[1] : paths[1])
+        get: get,
+        publisherInfo: {
+          publisher: 'twitch#author:' + providerValue,
+          publisherType: 'provider',
+          publisherURL: payload.author_url + '/videos',
+          providerName: provider.provider_name,
+          providerSuffix: 'author',
+          providerValue: providerValue,
+          faviconName: payload.author_name,
+          faviconURL: payload.author_thumbnail_url,
+          faviconURL2: payload.thumbnail_url
         }
       }
     }, payload), firstErr, callback)
   },
 
   YouTube: (providers, mediaURL, options, payload, firstErr, callback) => {
+    if (!payload) return next(providers, mediaURL, options, firstErr || new Error('empty oembed result'), callback)
+
     resolvers._channel(providers, mediaURL, options, underscore.extend({
       _channel: {
         providerName: 'youtube',
@@ -309,8 +344,11 @@ const retryTrip = (params, options, callback, retry) => {
   method = method(retry.delay)
 
   options.roundtrip(params, options, (err, response, payload) => {
-    const code = Math.floor(response.statusCode / 100)
+    let code
 
+    if (!response) return callback(err, response, payload)
+
+    code = Math.floor(response.statusCode / 100)
     if ((!err) || (code !== 5) || (retry.retries-- < 0)) return callback(err, response, payload)
 
     return setTimeout(() => { retryTrip(params, options, callback, retry) }, method(++retry.tries))
@@ -325,7 +363,7 @@ const roundTrip = (params, options, callback) => {
 
   params = underscore.defaults(underscore.extend(underscore.pick(parts, 'protocol', 'hostname', 'port'), params),
                                { method: params.payload ? 'POST' : 'GET' })
-  if (options.binaryP) options.rawP = true
+  if (options.binaryP || options.scrapeP) options.rawP = true
   if (options.debugP) console.log('\nparams=' + JSON.stringify(params, null, 2))
 
   request = client.request(underscore.omit(params, [ 'payload', 'timeout' ]), (response) => {
