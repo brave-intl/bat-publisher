@@ -28,7 +28,7 @@
     "data-expression": "1.0.0",
     "glob": "^7.1.2",
     "jimp": "0.2.28",
-    "joi": "^11.0.3",
+    "joi": "brave/joi",
     "jsdom": "11.2.0",
     "metascraper": "1.0.7",
     "node-cache": "4.1.1",
