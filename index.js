@@ -229,9 +229,17 @@ Synopsis.prototype.initPublisher = function (publisher, now, props) {
   if (entry) {
     if (!entry.options) entry.options = {}
     entry.options.stickyP = props.stickyP
+    entry.visits = entry.vists || 0
+    entry.duration = entry.duration || 0
+    entry.scores = entry.scores || underscore.clone(this.options.emptyScores)
 
     if ((!entry.window) || (!entry.window.length)) {
-      entry.window = [ { timestamp: now, visits: entry.visits, duration: entry.duration, scores: entry.scores } ]
+      entry.window = [ {
+        timestamp: now,
+        visits: entry.visits || 0,
+        duration: entry.duration || 0,
+        scores: entry.scores || underscore.clone(this.options.emptyScores)
+      } ]
     }
 
     return
