@@ -175,7 +175,7 @@ const resolvers = {
   },
 
   Twitch: (providers, mediaURL, options, payload, firstErr, callback) => {
-    if(!payload) payload = { author_url: mediaURL }
+    if (!payload) payload = { author_url: mediaURL }
 
     const parts = url.parse(payload.author_url)
     const paths = parts && parts.pathname.split('/')
