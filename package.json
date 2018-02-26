@@ -1,6 +1,6 @@
 {
   "name": "bat-publisher",
-  "version": "2.0.11",
+  "version": "2.0.12",
   "description": "Routines to identify publishers for the BAT.",
   "main": "index.js",
   "scripts": {
