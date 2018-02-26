@@ -5,7 +5,6 @@ const url = require('url')
 
 const backoff = require('@ambassify/backoff-strategies')
 const jimp = require('jimp')
-const metascraper = require('metascraper')
 const NodeCache = require('node-cache')
 const pcc = require('parse-cache-control')
 const tldjs = require('tldjs')
@@ -154,28 +153,24 @@ const resolvers = {
       server: parts.protocol + '//' + parts.host,
       path: parts.path,
       timeout: options.timeout
-    }, underscore.extend({ scrapeP: true }, options), (err, response, body) => {
+    }, underscore.extend({ windowP: true }, options), (err, response, body = {}) => {
       if (err) return next(providers, mediaURL, options, firstErr || err, callback)
 
-      metascraper.scrapeHtml(body).then((result) => {
-        const parts = url.parse(result.url)
-        const publisherInfo = {
-          publisher: payload._channel.providerName + '#channel:' + payload._channel.get(paths, parts),
-          publisherType: 'provider',
-          publisherURL: payload.author_url + '/videos',
-          providerName: provider.provider_name,
-          providerSuffix: 'channel',
-          providerValue: paths[2],
-          faviconName: payload.author_name || result.title,
-          faviconURL: result.image || payload.thumbnail_url
-        }
+      const parts = url.parse(body.url)
+      const publisherInfo = {
+        publisher: payload._channel.providerName + '#channel:' + payload._channel.get(paths, parts),
+        publisherType: 'provider',
+        publisherURL: payload.author_url + '/videos',
+        providerName: provider.provider_name,
+        providerSuffix: 'channel',
+        providerValue: paths[2],
+        faviconName: payload.author_name || body.title,
+        faviconURL: body.image || payload.thumbnail_url
+      }
 
-        if (publisherInfo.faviconURL !== payload.thumbnail_url) publisherInfo.faviconURL2 = payload.thumbnail_url
-        if (options.verboseP) console.log('\nmediaURL=' + mediaURL + ' scraper=' + JSON.stringify(result, null, 2))
-        inner(publisherInfo)
-      }).catch((err) => {
-        next(providers, mediaURL, options, firstErr || err, callback)
-      })
+      if (publisherInfo.faviconURL !== payload.thumbnail_url) publisherInfo.faviconURL2 = payload.thumbnail_url
+      if (options.verboseP) console.log('\nmediaURL=' + mediaURL + ' scraper=' + JSON.stringify(body, null, 2))
+      inner(publisherInfo)
     })
   },
 
@@ -312,7 +307,7 @@ const cachedTrip = (params, options, callback, retry) => {
   retryTrip(params, options, (err, response, body) => {
     let cacheInfo, ttl
 
-    if ((cache) && (!err)) {
+    if ((cache) && (!err) && response && response.headers) {
       cacheInfo = pcc(response.headers['cache-control'])
       if (cacheInfo) {
         if (!(cacheInfo.private || cacheInfo['no-cache'] || cacheInfo['no-store'])) ttl = cacheInfo['max-age']
