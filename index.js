@@ -325,12 +325,14 @@ Synopsis.prototype._topN = function (n, scorekeeper, allP) {
 
   results = []
   underscore.keys(this.publishers).forEach(function (publisher) {
-    if (!this.publishers[publisher].scores[scorekeeper]) return
+    if (
+      !this.publishers[publisher].scores ||
+      !this.publishers[publisher].scores[scorekeeper]) return
 
-    if (!this.publishers[publisher].options.stickyP) {
+    if (!this.publishers[publisher].options || !this.publishers[publisher].options.stickyP) {
       if ((!allP) &&
             ((this.options.minPublisherDuration > this.publishers[publisher].duration) ||
-             (this.options.minPublisherVisits > this.publishers[publisher].vists))) return
+             (this.options.minPublisherVisits > this.publishers[publisher].visits))) return
     }
 
     results.push(underscore.extend({ publisher: publisher }, underscore.omit(this.publishers[publisher], 'window')))
