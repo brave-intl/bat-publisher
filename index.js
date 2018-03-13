@@ -363,11 +363,10 @@ Synopsis.prototype.winners = function (n, weights) {
   const results = weights || this.topN()
   const pinned = []
   let count = 0
-  let winners
+  const winners = []
 
   if (!results) return
 
-  winners = []
   if ((typeof n !== 'number') || (n < 1)) n = 1
 
   results.forEach((result) => {
