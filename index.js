@@ -360,7 +360,7 @@ Synopsis.prototype.winner = function () {
 }
 
 Synopsis.prototype.winners = function (n, weights) {
-  const results = weights || this.topN()
+  const results = underscore.shuffle(weights || this.topN())
   const pinned = []
   let count = 0
   const winners = []
