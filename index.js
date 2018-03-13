@@ -379,10 +379,11 @@ Synopsis.prototype.winners = function (n, weights) {
     count += votes
   })
   while (count > n) {
-    const max = underscore.max(pinned, (result) => { return result.votes })
+    let mix = underscore.max(pinned, (result) => { return result.votes })
 
+    mix = underscore.min(pinned, (result) => { return ((result.votes === mix.votes) ? result.pinPercentage : 100) })
     count--
-    if (--max.votes <= 0) break
+    if (--mix.votes <= 0) break
   }
   pinned.forEach((entry) => {
     if (n === 0) return
