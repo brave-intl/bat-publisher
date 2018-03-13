@@ -373,7 +373,7 @@ Synopsis.prototype.winners = function (n, weights) {
   results.forEach((result) => {
     let votes
 
-    if ((typeof result.pinPercentage === 'undefined') || (result.pinPercentage <= 0)) return
+    if ((typeof result.pinPercentage !== 'number') || (result.pinPercentage <= 0)) return
 
     votes = Math.round((result.pinPercentage * n) / 100)
     pinned.push(underscore.extend({ votes: votes }, result))
@@ -396,7 +396,7 @@ Synopsis.prototype.winners = function (n, weights) {
 
 // NB: pinned publishers are still "in the running"
   underscore.times(n, function () {
-    let point = random.randomFloat()
+    const point = random.randomFloat()
     let upper = 0
     let i
 
