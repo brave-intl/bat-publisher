@@ -360,17 +360,45 @@ Synopsis.prototype.winner = function () {
 }
 
 Synopsis.prototype.winners = function (n, weights) {
-  const results = weights || this.topN()
-  let i, point, upper, winners
+  const results = underscore.shuffle(weights || this.topN())
+  const pinned = []
+  let count = 0
+  const winners = []
 
   if (!results) return
 
-  winners = []
-
   if ((typeof n !== 'number') || (n < 1)) n = 1
+
+  results.forEach((result) => {
+    let votes
+
+    if ((typeof result.pinPercentage !== 'number') || (result.pinPercentage <= 0)) return
+
+    votes = Math.round((result.pinPercentage * n) / 100)
+    pinned.push(underscore.extend({ votes: votes }, result))
+    count += votes
+  })
+  while (count > n) {
+    let mix = underscore.max(pinned, (result) => { return result.votes })
+
+    mix = underscore.min(pinned, (result) => { return ((result.votes === mix.votes) ? result.pinPercentage : 100) })
+    count--
+    if (--mix.votes <= 0) break
+  }
+  pinned.forEach((entry) => {
+    if (n === 0) return
+
+    if (entry.votes > n) entry.votes = n
+    underscore.times(entry.votes, () => { winners.push(entry.publisher) })
+    n -= entry.votes
+  })
+  if (n === 0) return winners
+
+// NB: pinned publishers are still "in the running"
   underscore.times(n, function () {
-    point = random.randomFloat()
-    upper = 0
+    const point = random.randomFloat()
+    let upper = 0
+    let i
 
     for (i = 0; i < results.length; i++) {
       upper += results[i].weight
