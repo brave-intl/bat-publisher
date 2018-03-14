@@ -12,5 +12,7 @@ const weights = [
   { publisher: '15%', weight: 0.15, pinPercentage: 15 }
 ]
 
+tap.same(Synopsis.prototype.winners(0, weights), [])
+
 tap.same(_.sortBy(Synopsis.prototype.winners(10, weights)),
   ['10%', '15%', '15%', '20%', '20%', '25%', '25%', '30%', '30%', '30%'])
