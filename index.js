@@ -281,6 +281,7 @@ Synopsis.prototype.addPublisher = function (publisher, props) {
   if (!props.revisitP) entry.window[0].visits++
   entry.window[0].duration += props.duration
   underscore.keys(scores).forEach(function (scorekeeper) {
+    if (!entry.window[0].scores) entry.window[0].scores = underscore.clone(this.options.emptyScores)
     if (!entry.window[0].scores[scorekeeper]) entry.window[0].scores[scorekeeper] = 0
     entry.window[0].scores[scorekeeper] += scores[scorekeeper]
   }, this)
@@ -288,6 +289,7 @@ Synopsis.prototype.addPublisher = function (publisher, props) {
   if (!props.revisitP) entry.visits++
   entry.duration += props.duration
   underscore.keys(scores).forEach(function (scorekeeper) {
+    if (!entry.scores) entry.scores = underscore.clone(this.options.emptyScores)
     if (!entry.scores[scorekeeper]) entry.scores[scorekeeper] = 0
     entry.scores[scorekeeper] += scores[scorekeeper]
   }, this)
