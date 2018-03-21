@@ -364,22 +364,31 @@ Synopsis.prototype.winner = function () {
 Synopsis.prototype.winners = function (n, weights) {
   const results = underscore.shuffle(weights || this.topN())
   const pinned = []
-  let count = 0
   const winners = []
+  let count = 0
+  let allP = true
 
   if (!results) return
 
   if ((typeof n !== 'number') || (n < 1)) n = 1
 
   results.forEach((result) => {
+    if ((typeof result.pinPercentage === 'number') && (result.pinPercentage > 0)) return
+
+    delete result.pinPercentage
+    allP = false
+  })
+
+  results.forEach((result) => {
     let votes
 
-    if ((typeof result.pinPercentage !== 'number') || (result.pinPercentage <= 0)) return
+    if (!result.pinPercentage) return
 
     votes = Math.round((result.pinPercentage * n) / 100)
     pinned.push(underscore.extend({ votes: votes }, result))
     count += votes
   })
+  console.log('count=' + count + ' n=' + n)
   while (count > n) {
     let mix = underscore.max(pinned, (result) => { return result.votes })
 
@@ -387,6 +396,7 @@ Synopsis.prototype.winners = function (n, weights) {
     count--
     if (--mix.votes <= 0) break
   }
+  console.log('count=' + count + ' n=' + n)
   pinned.forEach((entry) => {
     if (n === 0) return
 
@@ -394,10 +404,10 @@ Synopsis.prototype.winners = function (n, weights) {
     underscore.times(entry.votes, () => { winners.push(entry.publisher) })
     n -= entry.votes
   })
-  if (n === 0) return winners
 
-// NB: pinned publishers are still "in the running"
-  underscore.times(n, function () {
+  // NB: pinned publishers are no longer "in the running"
+  if (count === 0) allP = true
+  while (n > 0) {
     const point = random.randomFloat()
     let upper = 0
     let i
@@ -406,10 +416,13 @@ Synopsis.prototype.winners = function (n, weights) {
       upper += results[i].weight
       if (upper < point) continue
 
-      winners.push(results[i].publisher)
+      if ((allP) || (!results[i].pinPercentage)) {
+        winners.push(results[i].publisher)
+        n--
+      }
       break
     }
-  })
+  }
 
   return winners
 }
