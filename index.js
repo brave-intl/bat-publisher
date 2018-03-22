@@ -388,7 +388,7 @@ Synopsis.prototype.winners = function (n, weights) {
     pinned.push(underscore.extend({ votes: votes }, result))
     count += votes
   })
-  console.log('count=' + count + ' n=' + n)
+
   while (count > n) {
     let mix = underscore.max(pinned, (result) => { return result.votes })
 
