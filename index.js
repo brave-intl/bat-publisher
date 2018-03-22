@@ -396,7 +396,6 @@ Synopsis.prototype.winners = function (n, weights) {
     count--
     if (--mix.votes <= 0) break
   }
-  console.log('count=' + count + ' n=' + n)
   pinned.forEach((entry) => {
     if (n === 0) return
 
