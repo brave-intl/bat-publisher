@@ -404,7 +404,7 @@ Synopsis.prototype.winners = function (n, weights) {
     n -= entry.votes
   })
 
-  // NB: pinned publishers are no longer "in the running"
+  // NB: if (!allP), then pinned publishers are no longer "in the running"
   if (count === 0) allP = true
   while (n > 0) {
     const point = random.randomFloat()
@@ -423,7 +423,7 @@ Synopsis.prototype.winners = function (n, weights) {
     }
   }
 
-  return winners
+  return underscore.clone(winners)
 }
 
 Synopsis.prototype.toJSON = function () {
