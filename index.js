@@ -423,7 +423,7 @@ Synopsis.prototype.winners = function (n, weights) {
     }
   }
 
-  return underscore.clone(winners)
+  return winners
 }
 
 Synopsis.prototype.toJSON = function () {
