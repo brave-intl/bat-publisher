@@ -269,32 +269,33 @@ const getFaviconForPublisher = (publisherInfo, faviconURL, options, callback) =>
     if (!parts.host) parts.host = parts0.host
     if (!parts.port) parts.port = parts0.port
     if (!parts.hostname) parts.hostname = parts0.hostname
-    faviconURL = url.format(parts)
   }
 
   cachedTrip({
     server: parts.protocol + '//' + parts.host,
     path: parts.path,
     timeout: options.timeout
-  }, underscore.extend({ binaryP: true }, options), (err, response, body) => {
+  }, underscore.extend({ binaryP: true }, options), onFavIcon.bind(this, publisherInfo, callback))
+}
+
+const onFavIcon = (publisherInfo, callback, err, response, body) => {
+  if (err) return callback(err)
+
+  jimp.read(body, (err, image) => {
+    const bitmap = image && image.bitmap
+
     if (err) return callback(err)
 
-    jimp.read(body, (err, image) => {
-      const bitmap = image && image.bitmap
-
+    const dataURL = (err, base64) => {
       if (err) return callback(err)
 
-      const dataURL = (err, base64) => {
-        if (err) return callback(err)
+      publisherInfo.faviconURL = base64
+      callback(null, publisherInfo)
+    }
 
-        publisherInfo.faviconURL = base64
-        callback(null, publisherInfo)
-      }
+    if ((bitmap.width <= 32) || (bitmap.height <= 32)) return image.getBase64(jimp.AUTO, dataURL)
 
-      if ((bitmap.width <= 32) || (bitmap.height <= 32)) return image.getBase64(jimp.AUTO, dataURL)
-
-      image.resize(32, 32).getBase64(jimp.AUTO, dataURL)
-    })
+    image.resize(32, 32).getBase64(jimp.AUTO, dataURL)
   })
 }
 
@@ -357,7 +358,7 @@ const roundTrip = (params, options, callback) => {
   const client = parts.protocol === 'https:' ? https : http
 
   params = underscore.defaults(underscore.extend(underscore.pick(parts, 'protocol', 'hostname', 'port'), params),
-                               { method: params.payload ? 'POST' : 'GET' })
+    { method: params.payload ? 'POST' : 'GET' })
   if (options.binaryP || options.scrapeP) options.rawP = true
   if (options.debugP) console.log('\nparams=' + JSON.stringify(params, null, 2))
 
@@ -377,7 +378,7 @@ const roundTrip = (params, options, callback) => {
       body = Buffer.concat(chunks)
       if (options.verboseP) {
         console.log('>>> HTTP/' + response.httpVersionMajor + '.' + response.httpVersionMinor + ' ' + response.statusCode +
-                   ' ' + (response.statusMessage || ''))
+          ' ' + (response.statusMessage || ''))
         underscore.keys(response.headers).forEach(function (header) {
           console.log('>>> ' + header + ': ' + response.headers[header])
         })
@@ -420,5 +421,6 @@ module.exports = {
   getPublisherFromMediaURL: getPublisherFromMediaURL,
   getPublisherFromMediaProps: getPublisherFromMediaProps,
   ruleset: require('./media/providers.json'),
-  cache: new NodeCache()
+  cache: new NodeCache(),
+  onFavIcon
 }
