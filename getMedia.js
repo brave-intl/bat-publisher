@@ -5,6 +5,7 @@ const url = require('url')
 
 const backoff = require('@ambassify/backoff-strategies')
 const jimp = require('jimp')
+const sharp = require('sharp')
 const NodeCache = require('node-cache')
 const pcc = require('parse-cache-control')
 const tldjs = require('tldjs')
@@ -278,7 +279,7 @@ const getFaviconForPublisher = (publisherInfo, faviconURL, options, callback) =>
   }, underscore.extend({ binaryP: true }, options), onFavIcon.bind(this, publisherInfo, callback))
 }
 
-const onFavIcon = (publisherInfo, callback, err, response, body) => {
+const onFavIconOld = (publisherInfo, callback, err, response, body) => {
   if (err) return callback(err)
 
   jimp.read(body, (err, image) => {
@@ -297,6 +298,22 @@ const onFavIcon = (publisherInfo, callback, err, response, body) => {
 
     image.resize(32, 32).getBase64(jimp.AUTO, dataURL)
   })
+}
+
+
+const onFavIcon = (publisherInfo, callback, err, response, body) => {
+  if (err) return callback(err)
+
+  sharp(body)
+    .resize(32)
+    .toBuffer()
+    .then(data => {
+      publisherInfo.faviconURL = data.toString('base64')
+      callback(null, publisherInfo)
+    })
+    .catch(err => {
+      callback(err)
+    })
 }
 
 const cachedTrip = (params, options, callback, retry) => {
@@ -422,5 +439,6 @@ module.exports = {
   getPublisherFromMediaProps: getPublisherFromMediaProps,
   ruleset: require('./media/providers.json'),
   cache: new NodeCache(),
-  onFavIcon
+  onFavIcon,
+  onFavIconOld
 }
