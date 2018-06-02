@@ -460,9 +460,11 @@ Synopsis.prototype.scorekeepers.visits = function (/* props */) {
 
 Synopsis.prototype.prune = function (then) {
   const now = underscore.now()
+  const keys = Object.keys(this.publishers)
+  const oldSize = keys && keys.length
 
   if (!then) then = now - (this.options.numFrames * this.options.frameSize)
-  underscore.keys(this.publishers).forEach(function (publisher) {
+  keys.forEach(function (publisher) {
     const entry = this.publishers[publisher]
     const scores = {}
     let i
@@ -476,7 +478,13 @@ Synopsis.prototype.prune = function (then) {
     }
 
     for (i = 0; i < entry.window.length; i++) {
-      if (entry.window[i].timestamp < then) break
+      if (entry.window[i].timestamp < then) {
+        if (entry.pinPercentage == null || entry.pinPercentage < 0) {
+          break
+        }
+
+        entry.window[i].timestamp = now
+      }
 
       visits += entry.window[i].visits
       duration += entry.window[i].duration
@@ -496,7 +504,7 @@ Synopsis.prototype.prune = function (then) {
       entry.visits = 0
       entry.duration = 0
       entry.scores = underscore.clone(this.options.emptyScores)
-      entry.window = [ { timestamp: now, visits: entry.visits, duration: entry.duration, scores: entry.scores } ]
+      entry.window = [ { timestamp: now, visits: 0, duration: 0, scores: entry.scores } ]
       return
     }
 
@@ -507,6 +515,8 @@ Synopsis.prototype.prune = function (then) {
       entry.window = entry.window.slice(0, i)
     }
   }, this)
+
+  return oldSize !== Object.keys(this.publishers)
 }
 
 module.exports = {
