@@ -362,13 +362,23 @@ Synopsis.prototype.winner = function () {
 }
 
 Synopsis.prototype.winners = function (n, weights) {
-  const results = underscore.shuffle(weights || this.topN())
+  let results = underscore.shuffle(weights || this.topN())
   const pinned = []
   const winners = []
   let count = 0
   let allP = true
 
   if (!results) return
+
+  results = results.filter((result) => {
+    if (result.pinPercentage == null) {
+      return result.weight > 0
+    }
+
+    return true
+  })
+
+  if (results.length === 0) return winners
 
   if ((typeof n !== 'number') || (n < 1)) n = 1
 
