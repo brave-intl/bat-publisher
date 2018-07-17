@@ -37,6 +37,10 @@ const providerRE = /^([A-Za-z0-9][A-Za-z0-9-]{0,62})#([A-Za-z0-9][A-Za-z0-9-]{0,
 let jsdom
 
 const getPublisher = (location, markup, ruleset) => {
+  // This is temporary
+  if (!location) return
+  return tldjs.getDomain(location)
+  /*
   const props = getPublisherProps(location)
   let consequent, i, result, rule
 
@@ -75,6 +79,7 @@ const getPublisher = (location, markup, ruleset) => {
     // map null/false to undefined
     return
   }
+  */
 }
 
 const publisherURLs = {
