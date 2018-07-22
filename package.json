@@ -32,7 +32,7 @@
     "jsdom": "11.2.0",
     "node-cache": "4.1.1",
     "parse-cache-control": "1.0.1",
-    "random-lib": "2.1.0",
+    "random-lib": "^3.0.0",
     "tldjs": "2.2.0",
     "underscore": "1.8.3",
     "underscore.string": "3.3.4"

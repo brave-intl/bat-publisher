@@ -417,7 +417,7 @@ Synopsis.prototype.winners = function (n, weights) {
   // NB: if (!allP), then pinned publishers are no longer "in the running"
   if (count === 0) allP = true
   while (n > 0) {
-    const point = random.randomFloat()
+    const point = random.floatSync()
     let upper = 0
     let i
 
