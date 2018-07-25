@@ -2,9 +2,9 @@ const querystring = require('querystring')
 const url = require('url')
 
 const Joi = require('joi')
+const crypto = require('brave-crypto')
 const datax = require('data-expression')
 const npminfo = require('./package.json')
-const random = require('random-lib')
 const tldjs = require('tldjs')
 const trim = require('underscore.string/trim')
 const underscore = require('underscore')
@@ -417,7 +417,7 @@ Synopsis.prototype.winners = function (n, weights) {
   // NB: if (!allP), then pinned publishers are no longer "in the running"
   if (count === 0) allP = true
   while (n > 0) {
-    const point = random.floatSync()
+    const point = crypto.random.uniform_01()
     let upper = 0
     let i
 
