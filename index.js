@@ -536,8 +536,7 @@ module.exports = {
   getRules: (done) => { return require('./categories').all(done) },
   getMedia: () => { return require('./getMedia') },
   isPublisher: isPublisher,
-// Note - the rules are dynamically built via the 'npm run build-rules' script (do not edit the rules/index.js file directly)
-  ruleset: () => { return require('./rules') },
+  ruleset: () => [],
   schema: schema,
   Synopsis: Synopsis,
   version: npminfo.version
