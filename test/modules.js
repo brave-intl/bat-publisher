@@ -13,4 +13,7 @@ rules.modules().forEach(function (module) {
 const topLevelIndex = require('../index')
 tap.ok(_.isFunction(topLevelIndex.getRules, 'all function exposed'))
 
+const ruleset = require('../rules/')
+tap.ok(_.isArray(ruleset), 'built out rule set retrieved')
+
 tap.end()

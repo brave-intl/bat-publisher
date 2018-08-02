@@ -536,7 +536,7 @@ module.exports = {
   getRules: (done) => { return require('./categories').all(done) },
   getMedia: () => { return require('./getMedia') },
   isPublisher: isPublisher,
-  ruleset: () => [],
+  ruleset: () => { return require('./rules') },
   schema: schema,
   Synopsis: Synopsis,
   version: npminfo.version
