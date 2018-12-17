@@ -38,3 +38,6 @@ node_modules
 # bat-client bootstrap
 bootstrap.js
 test.js
+
+rules
+package-lock.json
