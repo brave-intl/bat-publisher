@@ -39,5 +39,5 @@ node_modules
 bootstrap.js
 test.js
 
-rules
+# Package lock
 package-lock.json
