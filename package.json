@@ -38,8 +38,8 @@
     "underscore.string": "^3.3.5"
   },
   "engines": {
-    "node": "8.9.2",
-    "npm": "5.10.0"
+    "node": "12.13.1",
+    "npm": "6.12.1"
   },
   "devDependencies": {
     "babel-eslint": "^8.0.0",
