@@ -37,10 +37,6 @@
     "underscore": "1.8.3",
     "underscore.string": "^3.3.5"
   },
-  "engines": {
-    "node": "12.13.1",
-    "npm": "6.12.1"
-  },
   "devDependencies": {
     "babel-eslint": "^8.0.0",
     "oembed-parser": "^1.0.8",
