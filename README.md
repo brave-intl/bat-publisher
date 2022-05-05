@@ -245,4 +245,4 @@ using the weighted score:
 
 ## Acknowledgements
 Many thanks to [Elijah Insua](https://github.com/tmpvar) for the excellent [jsdom](https://github.com/tmpvar/jsdom) package,
-and to [Thomas Parisot](https://github.com/oncletom) for the excellent [tldjs](https://github.com/oncletom/tld.js) package.
+and to [Thomas Parisot](https://github.com/thom4parisot) for the excellent [tldjs](https://github.com/oncletom/tld.js) package.
